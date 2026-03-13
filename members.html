@@ -389,6 +389,20 @@
 
   <div class="members-main">
 
+    <!-- ランダム企業ノート -->
+    <div class="m-section" id="random-notes-section" style="display:none;">
+      <div class="m-section-header">
+        <div class="m-section-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        </div>
+        <div>
+          <div class="m-section-label">TODAY'S PICK</div>
+          <div class="m-section-title">今日のおすすめ企業ノート</div>
+        </div>
+      </div>
+      <div class="company-notes-grid" id="random-notes-grid"></div>
+    </div>
+
     <!-- ① 選考情報・ES共有 -->
     <div class="m-section">
       <div class="m-section-header">
@@ -876,7 +890,28 @@
     if (!COMPANY_CSV) return;
     try {
       companyNotes = await fetchCSV(COMPANY_CSV);
+      renderRandomNotes();
     } catch(e) { console.warn('企業分析ノート読み込み失敗', e); }
+  }
+
+  function renderRandomNotes() {
+    const valid = companyNotes.filter(r => r[0] && r[0].trim());
+    if (!valid.length) return;
+    // ランダムに3社選ぶ
+    const shuffled = [...valid].sort(() => Math.random() - 0.5);
+    const picks = shuffled.slice(0, Math.min(3, shuffled.length));
+    const section = document.getElementById('random-notes-section');
+    const grid = document.getElementById('random-notes-grid');
+    section.style.display = 'block';
+    grid.innerHTML = picks.map(r => {
+      const preview = [r[2], r[3], r[4]].filter(Boolean).join(' ／ ');
+      return `<div class="company-note-card" onclick="openModal('${(r[0]||'').replace(/'/g,"\\'")}')">
+        <div class="company-note-card-name">${r[0]||'–'}</div>
+        ${r[1] ? `<div class="company-note-card-industry">${r[1]}</div>` : ''}
+        ${preview ? `<div class="company-note-card-preview">${preview}</div>` : ''}
+        <div class="company-note-card-arrow">ノートを見る →</div>
+      </div>`;
+    }).join('');
   }
 
   function findNote(companyName) {
@@ -898,7 +933,8 @@
     }
     const results = companyNotes.filter(r => {
       const name = (r[0] || '').trim();
-      return name && name.includes(q);
+      const industry = (r[1] || '').trim();
+      return (name && name.includes(q)) || (industry && industry.includes(q));
     });
     if (!results.length) {
       grid.innerHTML = '<div class="m-empty" style="grid-column:1/-1;">「' + q + '」に一致する企業ノートが見つかりませんでした。</div>';
