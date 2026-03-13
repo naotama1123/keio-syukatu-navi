@@ -248,62 +248,6 @@
 
   /* ===== QUIZ ===== */
   .quiz-box {
-    background: var(--white); border-top: 3px solid var(--gold);
-    padding: 2rem; position: relative;
-  }
-  .quiz-hint-label {
-    font-size: 0.65rem; color: var(--crimson); font-weight: 700;
-    letter-spacing: 0.15em; margin-bottom: 0.6rem;
-  }
-  .quiz-hint {
-    font-size: 0.92rem; color: var(--text); line-height: 1.8;
-    background: var(--gray); padding: 1rem 1.2rem;
-    border-left: 3px solid rgba(201,168,76,0.4);
-    margin-bottom: 1.5rem; white-space: pre-wrap;
-  }
-  .quiz-choices {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 0.6rem; margin-bottom: 1.2rem;
-  }
-  .quiz-choice {
-    padding: 0.8rem 1rem; background: var(--cream);
-    border: 1px solid rgba(10,26,62,0.15); color: var(--navy);
-    font-family: 'Noto Sans JP', sans-serif; font-size: 0.88rem;
-    font-weight: 500; cursor: pointer; text-align: left;
-    transition: all 0.15s; letter-spacing: 0.02em;
-  }
-  .quiz-choice:hover:not(:disabled) { background: var(--navy); color: white; border-color: var(--navy); }
-  .quiz-choice.correct { background: #e6f4ec; border-color: #00703c; color: #00703c; font-weight: 700; }
-  .quiz-choice.wrong { background: rgba(192,0,26,0.06); border-color: var(--crimson); color: var(--crimson); }
-  .quiz-choice:disabled { cursor: default; }
-  .quiz-result {
-    text-align: center; padding: 0.8rem; font-size: 0.92rem;
-    font-weight: 700; margin-bottom: 1rem; min-height: 2rem;
-  }
-  .quiz-result.correct { color: #00703c; }
-  .quiz-result.wrong { color: var(--crimson); }
-  .quiz-footer {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 0.8rem;
-  }
-  .quiz-score { font-size: 0.8rem; color: var(--text-muted); }
-  .quiz-score span { font-weight: 700; color: var(--navy); }
-  .quiz-next-btn {
-    padding: 0.6rem 1.5rem; background: var(--navy); color: white;
-    border: none; font-family: 'Noto Sans JP', sans-serif;
-    font-size: 0.82rem; font-weight: 600; cursor: pointer;
-    letter-spacing: 0.08em; transition: background 0.2s;
-  }
-  .quiz-next-btn:hover { background: var(--crimson); }
-  .quiz-next-btn:disabled { background: rgba(10,26,62,0.2); cursor: default; }
-  .quiz-hint-type {
-    font-size: 0.68rem; color: var(--text-muted); margin-bottom: 0.4rem;
-  }
-  .quiz-empty { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem; }
-  @media (max-width: 500px) { .quiz-choices { grid-template-columns: 1fr; } }
-
-  /* ===== QUIZ ===== */
-  .quiz-box {
     background: var(--white); border: 1px solid rgba(10,26,62,0.08); padding: 2.5rem;
   }
   .quiz-start { text-align: center; }
@@ -603,22 +547,6 @@
     </div>
 
     <!-- 企業クイズ -->
-    <div class="m-section" id="quiz-section" style="display:none;">
-      <div class="m-section-header">
-        <div class="m-section-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        </div>
-        <div>
-          <div class="m-section-label">QUIZ</div>
-          <div class="m-section-title">企業研究クイズ</div>
-        </div>
-      </div>
-      <div class="quiz-box" id="quiz-box">
-        <div class="quiz-empty">読み込み中...</div>
-      </div>
-    </div>
-
-    <!-- 企業クイズ -->
     <div class="m-section">
       <div class="m-section-header">
         <div class="m-section-icon">
@@ -753,7 +681,9 @@
 
   async function fetchCSV(url) {
     const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
+    if (text.includes('<html')) throw new Error('アクセス拒否（スプシの共有設定を確認してください）');
     return text.trim().split('\n').map(line => {
       const result = [];
       let cur = '', inQ = false;
@@ -1257,7 +1187,6 @@
 
   async function loadAll() {
     await loadCompanyNotes();
-    initQuiz();
     await Promise.all([loadSelection(), loadEvents(), loadPriority(), loadFiles(), loadBooks()]);
   }
 </script>
