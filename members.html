@@ -675,7 +675,7 @@
           <div><span class="sel-tag ${tagClass}">${r[2]||'–'}</span></div>
           <div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-start;">
             ${hasLink ? `<a href="${r[3]}" target="_blank" class="sel-link">開く →</a>` : '–'}
-            ${selNote ? `<button onclick="openModal('${companyNameClean.replace(/'/g,"\\'")}');event.stopPropagation();" style="font-size:0.68rem;padding:0.2rem 0.5rem;background:rgba(10,26,62,0.07);border:1px solid rgba(10,26,62,0.15);color:var(--navy);cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-weight:600;letter-spacing:0.04em;">📋 企業ノート</button>` : ''}
+            ${selNote ? `<button onclick="openModal('${companyNameClean.replace(/'/g,"\\'")}');event.stopPropagation();" style="font-size:0.68rem;padding:0.2rem 0.6rem;background:rgba(10,26,62,0.07);border:1px solid rgba(10,26,62,0.15);color:var(--navy);cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-weight:600;letter-spacing:0.04em;white-space:nowrap;">企業ノート</button>` : ''}
           </div>
         </div>`;
       }).join('');
