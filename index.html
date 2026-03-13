@@ -844,6 +844,67 @@
   .contact-note.success { color: #00703c; }
   .contact-note.error { color: var(--crimson); }
 
+  /* ===== HAMBURGER ===== */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .hamburger span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: rgba(255,255,255,0.8);
+    transition: all 0.3s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    top: 68px; left: 0; right: 0;
+    background: rgba(10,26,62,0.98);
+    backdrop-filter: blur(12px);
+    z-index: 99;
+    flex-direction: column;
+    padding: 1.5rem 6vw 2rem;
+    border-bottom: 1px solid rgba(201,168,76,0.2);
+  }
+  .mobile-menu.open { display: flex; }
+  .mobile-menu a {
+    color: rgba(255,255,255,0.75);
+    text-decoration: none;
+    font-size: 0.95rem;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    letter-spacing: 0.04em;
+    transition: color 0.2s;
+  }
+  .mobile-menu a:hover { color: var(--gold-light); }
+  .mobile-menu-members {
+    color: var(--gold-light) !important;
+    font-weight: 500;
+  }
+  .mobile-menu-cta {
+    margin-top: 1rem;
+    background: var(--crimson) !important;
+    color: white !important;
+    text-align: center;
+    padding: 0.9rem !important;
+    border: none !important;
+    font-weight: 500;
+  }
+
+  @media (max-width: 900px) {
+    .hamburger { display: flex; }
+  }
+
   /* ===== ANIMATIONS ===== */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(24px); }
@@ -1041,9 +1102,24 @@
     <li><a href="#events">イベント</a></li>
     <li><a href="#faq">FAQ</a></li>
     <li><a href="#contact">お問い合わせ</a></li>
+    <li><a href="members.html" class="nav-cta" style="background:rgba(201,168,76,0.15); color:var(--gold-light); border:1px solid rgba(201,168,76,0.3);">会員ページ</a></li>
     <li><a href="https://docs.google.com/forms/d/e/1FAIpQLScL31q5XlLB7dtv1_37s-Ssm9DUQcJUDSCqYetDe3an48p8Hw/viewform?usp=publish-editor" class="nav-cta" target="_blank" rel="noopener">参加する</a></li>
   </ul>
+  <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#mission" onclick="closeMenu()">ミッション</a>
+  <a href="#activities" onclick="closeMenu()">活動内容</a>
+  <a href="#events" onclick="closeMenu()">イベント</a>
+  <a href="#faq" onclick="closeMenu()">FAQ</a>
+  <a href="#contact" onclick="closeMenu()">お問い合わせ</a>
+  <a href="members.html" class="mobile-menu-members">🔒 会員ページ</a>
+  <a href="https://docs.google.com/forms/d/e/1FAIpQLScL31q5XlLB7dtv1_37s-Ssm9DUQcJUDSCqYetDe3an48p8Hw/viewform?usp=publish-editor" class="mobile-menu-cta" target="_blank" rel="noopener">参加する</a>
+</div>
 
 <!-- HERO -->
 <section class="hero" id="home">
@@ -1401,6 +1477,16 @@
       }
     });
   });
+
+  // ===== HAMBURGER MENU =====
+  function toggleMenu() {
+    document.getElementById('hamburger').classList.toggle('open');
+    document.getElementById('mobile-menu').classList.toggle('open');
+  }
+  function closeMenu() {
+    document.getElementById('hamburger').classList.remove('open');
+    document.getElementById('mobile-menu').classList.remove('open');
+  }
 
   // Scroll reveal
   const reveals = document.querySelectorAll('.reveal');
