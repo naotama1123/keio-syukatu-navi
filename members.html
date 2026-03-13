@@ -246,6 +246,119 @@
     letter-spacing: 0.05em; white-space: nowrap;
   }
 
+  /* ===== QUIZ ===== */
+  .quiz-box {
+    background: var(--white); border-top: 3px solid var(--gold);
+    padding: 2rem; position: relative;
+  }
+  .quiz-hint-label {
+    font-size: 0.65rem; color: var(--crimson); font-weight: 700;
+    letter-spacing: 0.15em; margin-bottom: 0.6rem;
+  }
+  .quiz-hint {
+    font-size: 0.92rem; color: var(--text); line-height: 1.8;
+    background: var(--gray); padding: 1rem 1.2rem;
+    border-left: 3px solid rgba(201,168,76,0.4);
+    margin-bottom: 1.5rem; white-space: pre-wrap;
+  }
+  .quiz-choices {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.6rem; margin-bottom: 1.2rem;
+  }
+  .quiz-choice {
+    padding: 0.8rem 1rem; background: var(--cream);
+    border: 1px solid rgba(10,26,62,0.15); color: var(--navy);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 0.88rem;
+    font-weight: 500; cursor: pointer; text-align: left;
+    transition: all 0.15s; letter-spacing: 0.02em;
+  }
+  .quiz-choice:hover:not(:disabled) { background: var(--navy); color: white; border-color: var(--navy); }
+  .quiz-choice.correct { background: #e6f4ec; border-color: #00703c; color: #00703c; font-weight: 700; }
+  .quiz-choice.wrong { background: rgba(192,0,26,0.06); border-color: var(--crimson); color: var(--crimson); }
+  .quiz-choice:disabled { cursor: default; }
+  .quiz-result {
+    text-align: center; padding: 0.8rem; font-size: 0.92rem;
+    font-weight: 700; margin-bottom: 1rem; min-height: 2rem;
+  }
+  .quiz-result.correct { color: #00703c; }
+  .quiz-result.wrong { color: var(--crimson); }
+  .quiz-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 0.8rem;
+  }
+  .quiz-score { font-size: 0.8rem; color: var(--text-muted); }
+  .quiz-score span { font-weight: 700; color: var(--navy); }
+  .quiz-next-btn {
+    padding: 0.6rem 1.5rem; background: var(--navy); color: white;
+    border: none; font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.82rem; font-weight: 600; cursor: pointer;
+    letter-spacing: 0.08em; transition: background 0.2s;
+  }
+  .quiz-next-btn:hover { background: var(--crimson); }
+  .quiz-next-btn:disabled { background: rgba(10,26,62,0.2); cursor: default; }
+  .quiz-hint-type {
+    font-size: 0.68rem; color: var(--text-muted); margin-bottom: 0.4rem;
+  }
+  .quiz-empty { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.85rem; }
+  @media (max-width: 500px) { .quiz-choices { grid-template-columns: 1fr; } }
+
+  /* ===== QUIZ ===== */
+  .quiz-box {
+    background: var(--white); border: 1px solid rgba(10,26,62,0.08); padding: 2.5rem;
+  }
+  .quiz-start { text-align: center; }
+  .quiz-start-desc { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+  .quiz-start-btn {
+    padding: 0.8rem 2rem; background: var(--navy); color: white;
+    border: none; font-family: 'Noto Sans JP', sans-serif; font-size: 0.88rem;
+    font-weight: 600; cursor: pointer; letter-spacing: 0.08em; transition: background 0.2s;
+  }
+  .quiz-start-btn:hover { background: var(--crimson); }
+  .quiz-score-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid rgba(10,26,62,0.08);
+  }
+  .quiz-score { font-size: 0.8rem; color: var(--text-muted); }
+  .quiz-score strong { color: var(--navy); font-size: 1rem; }
+  .quiz-skip-btn {
+    font-size: 0.72rem; color: var(--text-muted); background: none; border: none;
+    cursor: pointer; font-family: 'Noto Sans JP', sans-serif; text-decoration: underline;
+  }
+  .quiz-hints { margin-bottom: 2rem; display: flex; flex-direction: column; gap: 0.8rem; }
+  .quiz-hint {
+    padding: 0.8rem 1.2rem; background: var(--gray);
+    border-left: 3px solid var(--gold);
+  }
+  .quiz-hint-label { font-size: 0.62rem; color: var(--crimson); font-weight: 700; letter-spacing: 0.12em; margin-bottom: 0.3rem; }
+  .quiz-hint-text { font-size: 0.85rem; color: var(--text); line-height: 1.7; }
+  .quiz-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1.5rem; }
+  .quiz-choice {
+    padding: 0.9rem 1rem; background: white; border: 1px solid rgba(10,26,62,0.15);
+    font-family: 'Noto Serif JP', serif; font-size: 0.88rem; color: var(--navy);
+    cursor: pointer; text-align: left; transition: all 0.15s; font-weight: 600;
+  }
+  .quiz-choice:hover { background: rgba(10,26,62,0.05); border-color: var(--navy); }
+  .quiz-choice.correct { background: rgba(0,160,80,0.1); border-color: #00703c; color: #00703c; }
+  .quiz-choice.wrong { background: rgba(192,0,26,0.08); border-color: var(--crimson); color: var(--crimson); }
+  .quiz-choice.reveal { background: rgba(0,160,80,0.06); border-color: #00703c; color: #00703c; }
+  .quiz-choice:disabled { cursor: default; }
+  .quiz-result {
+    text-align: center; padding: 1.2rem; margin-bottom: 1rem;
+    font-size: 1rem; font-weight: 700; font-family: 'Noto Serif JP', serif;
+  }
+  .quiz-result.correct { color: #00703c; background: rgba(0,160,80,0.08); }
+  .quiz-result.wrong { color: var(--crimson); background: rgba(192,0,26,0.05); }
+  .quiz-next-btn {
+    width: 100%; padding: 0.8rem; background: var(--navy); color: white;
+    border: none; font-family: 'Noto Sans JP', sans-serif; font-size: 0.88rem;
+    font-weight: 600; cursor: pointer; letter-spacing: 0.06em; transition: background 0.2s;
+  }
+  .quiz-next-btn:hover { background: var(--crimson); }
+  .quiz-finish { text-align: center; padding: 1rem 0; }
+  .quiz-finish-score { font-family: 'Playfair Display', serif; font-size: 3rem; color: var(--navy); line-height: 1; margin-bottom: 0.5rem; }
+  .quiz-finish-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+  @media (max-width: 500px) { .quiz-choices { grid-template-columns: 1fr; } }
+
   /* ===== COMPANY NOTES SEARCH ===== */
   .company-search-wrap { margin-bottom: 1rem; }
   .company-search-input {
@@ -486,6 +599,41 @@
       </div>
       <div class="company-notes-grid" id="company-notes-grid">
         <div class="m-empty">企業名を入力して検索してください。</div>
+      </div>
+    </div>
+
+    <!-- 企業クイズ -->
+    <div class="m-section" id="quiz-section" style="display:none;">
+      <div class="m-section-header">
+        <div class="m-section-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div>
+          <div class="m-section-label">QUIZ</div>
+          <div class="m-section-title">企業研究クイズ</div>
+        </div>
+      </div>
+      <div class="quiz-box" id="quiz-box">
+        <div class="quiz-empty">読み込み中...</div>
+      </div>
+    </div>
+
+    <!-- 企業クイズ -->
+    <div class="m-section">
+      <div class="m-section-header">
+        <div class="m-section-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div>
+          <div class="m-section-label">QUIZ</div>
+          <div class="m-section-title">企業研究クイズ</div>
+        </div>
+      </div>
+      <div class="quiz-box" id="quiz-box">
+        <div class="quiz-start">
+          <p class="quiz-start-desc">企業ノートの情報をヒントに、どの会社か当てよう！</p>
+          <button class="quiz-start-btn" onclick="startQuiz()">クイズを始める →</button>
+        </div>
       </div>
     </div>
 
@@ -1004,8 +1152,212 @@
   }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
 
+  // ===== 企業クイズ =====
+  let quizCorrect = 0;
+  let quizTotal = 0;
+  let quizAnswered = false;
+
+  const HINT_TYPES = [
+    { label: '事業内容', col: 2 },
+    { label: '強み・弱み', col: 3 },
+    { label: '志望動機メモ', col: 4 },
+    { label: '選考フロー', col: 5 },
+  ];
+
+  function initQuiz() {
+    const valid = companyNotes.filter(r => {
+      if (!r[0] || !r[0].trim()) return false;
+      return HINT_TYPES.some(h => r[h.col] && r[h.col].trim());
+    });
+    if (valid.length < 4) {
+      document.getElementById('quiz-box').innerHTML = '<div class="quiz-empty">企業ノートが4社以上登録されるとクイズが使えます。</div>';
+      document.getElementById('quiz-section').style.display = 'block';
+      return;
+    }
+    document.getElementById('quiz-section').style.display = 'block';
+    renderQuiz();
+  }
+
+  function renderQuiz() {
+    quizAnswered = false;
+    const valid = companyNotes.filter(r => {
+      if (!r[0] || !r[0].trim()) return false;
+      return HINT_TYPES.some(h => r[h.col] && r[h.col].trim());
+    });
+
+    // 正解企業をランダム選択
+    const correct = valid[Math.floor(Math.random() * valid.length)];
+
+    // ヒントタイプをランダム選択
+    const availableHints = HINT_TYPES.filter(h => correct[h.col] && correct[h.col].trim());
+    const hint = availableHints[Math.floor(Math.random() * availableHints.length)];
+
+    // ヒントテキストを最大150文字に
+    const hintText = correct[hint.col].trim().slice(0, 150) + (correct[hint.col].trim().length > 150 ? '…' : '');
+
+    // 不正解3社をランダム選択
+    const others = companyNotes.filter(r => r[0] && r[0].trim() && r[0].trim() !== correct[0].trim());
+    const shuffledOthers = [...others].sort(() => Math.random() - 0.5).slice(0, 3);
+    const choices = [correct, ...shuffledOthers].sort(() => Math.random() - 0.5);
+
+    const box = document.getElementById('quiz-box');
+    box.innerHTML = `
+      <div class="quiz-hint-label">HINT — ${hint.label}</div>
+      <div class="quiz-hint">${hintText}</div>
+      <div class="quiz-choices" id="quiz-choices">
+        ${choices.map((c, i) => `
+          <button class="quiz-choice" id="qc-${i}" onclick="answerQuiz(${i}, '${correct[0].replace(/'/g,"\'")}', ${i})">
+            ${c[0]}
+          </button>`).join('')}
+      </div>
+      <div class="quiz-result" id="quiz-result"></div>
+      <div class="quiz-footer">
+        <div class="quiz-score">正解数: <span id="quiz-score-correct">${quizCorrect}</span> / <span id="quiz-score-total">${quizTotal}</span></div>
+        <button class="quiz-next-btn" id="quiz-next" onclick="renderQuiz()" disabled>次の問題 →</button>
+      </div>
+    `;
+
+    // 正解インデックスを記録
+    box.dataset.correctName = correct[0];
+    box.dataset.correctIdx = choices.findIndex(c => c[0].trim() === correct[0].trim());
+  }
+
+  function answerQuiz(clickedIdx, correctName, idx) {
+    if (quizAnswered) return;
+    quizAnswered = true;
+    quizTotal++;
+
+    const box = document.getElementById('quiz-box');
+    const correctIdx = parseInt(box.dataset.correctIdx);
+    const buttons = document.querySelectorAll('.quiz-choice');
+    const result = document.getElementById('quiz-result');
+
+    buttons.forEach(b => b.disabled = true);
+    buttons[correctIdx].classList.add('correct');
+
+    if (clickedIdx === correctIdx) {
+      quizCorrect++;
+      result.textContent = '正解！';
+      result.className = 'quiz-result correct';
+    } else {
+      buttons[clickedIdx].classList.add('wrong');
+      result.textContent = `不正解… 正解は「${correctName}」でした`;
+      result.className = 'quiz-result wrong';
+    }
+
+    document.getElementById('quiz-score-correct').textContent = quizCorrect;
+    document.getElementById('quiz-score-total').textContent = quizTotal;
+    document.getElementById('quiz-next').disabled = false;
+  }
+
+
+  // ===== 企業クイズ =====
+  let quizCorrect = 0, quizTotal = 0, quizUsed = [];
+
+  function startQuiz() {
+    quizCorrect = 0; quizTotal = 0; quizUsed = [];
+    nextQuiz();
+  }
+
+  function nextQuiz() {
+    const valid = companyNotes.filter(r =>
+      r[0] && r[0].trim() && [r[2],r[3],r[4],r[5]].some(v => v && v.trim())
+    );
+    if (valid.length < 4) {
+      document.getElementById('quiz-box').innerHTML =
+        '<div class="quiz-start"><p class="quiz-start-desc">企業ノートが4社以上登録されると遊べるようになります。</p></div>';
+      return;
+    }
+    // 未出題を優先、全部出たらリセット
+    let pool = valid.filter(r => !quizUsed.includes(r[0]));
+    if (pool.length === 0) { quizUsed = []; pool = valid; }
+
+    const correct = pool[Math.floor(Math.random() * pool.length)];
+    quizUsed.push(correct[0]);
+
+    // 不正解3択: 正解以外からランダム
+    const others = valid.filter(r => r[0] !== correct[0]);
+    const shuffled = others.sort(() => Math.random() - 0.5).slice(0, 3);
+    const choices = [...shuffled, correct].sort(() => Math.random() - 0.5);
+
+    // ヒント選択（空でないフィールドからランダムに最大2つ）
+    const hintDefs = [
+      { label: '事業内容', value: correct[2] },
+      { label: '強み・弱み', value: correct[3] },
+      { label: '志望動機メモ', value: correct[4] },
+      { label: '選考フロー', value: correct[5] },
+    ].filter(h => h.value && h.value.trim());
+    const hints = hintDefs.sort(() => Math.random() - 0.5).slice(0, 2);
+
+    const box = document.getElementById('quiz-box');
+    box.innerHTML = `
+      <div class="quiz-score-bar">
+        <div class="quiz-score">正解 <strong>${quizCorrect}</strong> / ${quizTotal}問</div>
+        <button class="quiz-skip-btn" onclick="nextQuiz()">スキップ</button>
+      </div>
+      <div class="quiz-hints">
+        ${hints.map(h => `
+          <div class="quiz-hint">
+            <div class="quiz-hint-label">${h.label}</div>
+            <div class="quiz-hint-text">${h.value}</div>
+          </div>`).join('')}
+      </div>
+      <div class="quiz-choices">
+        ${choices.map(r => `
+          <button class="quiz-choice" onclick="answerQuiz(this, '${r[0].replace(/'/g,"\'")}', '${correct[0].replace(/'/g,"\'")}')">
+            ${r[0]}
+          </button>`).join('')}
+      </div>
+      <div id="quiz-result"></div>
+    `;
+  }
+
+  function answerQuiz(btn, chosen, correctName) {
+    quizTotal++;
+    const isCorrect = chosen === correctName;
+    if (isCorrect) quizCorrect++;
+
+    // 全ボタン無効化・色付け
+    document.querySelectorAll('.quiz-choice').forEach(b => {
+      b.disabled = true;
+      if (b.textContent.trim() === correctName) b.classList.add(isCorrect ? 'correct' : 'reveal');
+      else if (b === btn && !isCorrect) b.classList.add('wrong');
+    });
+
+    const result = document.getElementById('quiz-result');
+    result.className = 'quiz-result ' + (isCorrect ? 'correct' : 'wrong');
+    result.textContent = isCorrect ? '正解！' : `不正解…正解は「${correctName}」でした`;
+
+    const box = document.getElementById('quiz-box');
+    // 次へボタン or 終了
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'quiz-next-btn';
+    if (quizTotal >= 5) {
+      nextBtn.textContent = '結果を見る';
+      nextBtn.onclick = showQuizResult;
+    } else {
+      nextBtn.textContent = `次の問題へ（${quizTotal}/5）→`;
+      nextBtn.onclick = nextQuiz;
+    }
+    box.appendChild(nextBtn);
+  }
+
+  function showQuizResult() {
+    const pct = Math.round(quizCorrect / quizTotal * 100);
+    const msg = pct === 100 ? '完璧！企業研究マスター' : pct >= 60 ? 'なかなかいい感じ！' : 'もっと企業ノートを読もう…';
+    document.getElementById('quiz-box').innerHTML = `
+      <div class="quiz-finish">
+        <div class="quiz-finish-score">${quizCorrect} / ${quizTotal}</div>
+        <div class="quiz-finish-label">${msg}</div>
+        <button class="quiz-start-btn" onclick="startQuiz()">もう一度挑戦する</button>
+      </div>
+    `;
+  }
+
   async function loadAll() {
-    await Promise.all([loadCompanyNotes(), loadSelection(), loadEvents(), loadPriority(), loadFiles(), loadBooks()]);
+    await loadCompanyNotes();
+    initQuiz();
+    await Promise.all([loadSelection(), loadEvents(), loadPriority(), loadFiles(), loadBooks()]);
   }
 </script>
 </body>
