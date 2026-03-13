@@ -196,6 +196,81 @@
   .file-meta { font-size: 0.72rem; color: var(--text-muted); }
   .file-link { font-size: 0.75rem; color: var(--crimson); margin-top: auto; }
 
+  /* ===== COMPANY NOTE MODAL ===== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(10,26,62,0.7); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 2rem;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--cream); max-width: 680px; width: 100%;
+    max-height: 85vh; overflow-y: auto; position: relative;
+    border-top: 3px solid var(--gold);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  }
+  .modal-header {
+    position: sticky; top: 0; background: var(--navy);
+    padding: 1.2rem 1.5rem; display: flex; align-items: center;
+    justify-content: space-between; gap: 1rem; z-index: 1;
+  }
+  .modal-company-name { font-family: 'Noto Serif JP', serif; font-size: 1.1rem; color: var(--white); font-weight: 700; }
+  .modal-industry { font-size: 0.72rem; color: var(--gold); letter-spacing: 0.1em; margin-top: 0.2rem; }
+  .modal-close {
+    background: none; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.6);
+    width: 32px; height: 32px; font-size: 1rem; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .modal-close:hover { border-color: var(--crimson); color: var(--crimson); }
+  .modal-body { padding: 1.8rem; display: flex; flex-direction: column; gap: 1.5rem; }
+  .modal-field {}
+  .modal-field-label {
+    font-size: 0.65rem; color: var(--crimson); font-weight: 700;
+    letter-spacing: 0.15em; margin-bottom: 0.5rem;
+  }
+  .modal-field-content {
+    font-size: 0.88rem; color: var(--text); line-height: 1.8;
+    white-space: pre-wrap; background: white; padding: 0.8rem 1rem;
+    border-left: 2px solid rgba(201,168,76,0.3);
+  }
+  .modal-field-empty { color: var(--text-muted); font-style: italic; }
+  .modal-url { font-size: 0.82rem; color: var(--navy); word-break: break-all; text-decoration: underline; text-underline-offset: 3px; }
+  .modal-no-data {
+    text-align: center; padding: 3rem; color: var(--text-muted); font-size: 0.88rem;
+  }
+  .event-row.has-note { cursor: pointer; }
+  .event-row.has-note:hover { background: #f0ede6; }
+  .note-badge {
+    font-size: 0.62rem; padding: 0.15rem 0.5rem; background: rgba(10,26,62,0.08);
+    color: var(--navy); border: 1px solid rgba(10,26,62,0.15); font-weight: 600;
+    letter-spacing: 0.05em; white-space: nowrap;
+  }
+
+  /* ===== COMPANY NOTES SEARCH ===== */
+  .company-search-wrap { margin-bottom: 1rem; }
+  .company-search-input {
+    width: 100%; padding: 0.85rem 1.2rem;
+    border: 1px solid rgba(10,26,62,0.2); background: white;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 0.9rem; color: var(--text);
+    outline: none; transition: border-color 0.2s;
+  }
+  .company-search-input:focus { border-color: var(--navy); }
+  .company-notes-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1px; background: rgba(10,26,62,0.08);
+  }
+  .company-note-card {
+    background: white; padding: 1.3rem 1.5rem;
+    cursor: pointer; transition: background 0.2s; border-left: 3px solid transparent;
+  }
+  .company-note-card:hover { background: #f8f5f0; border-left-color: var(--gold); }
+  .company-note-card-name { font-family: 'Noto Serif JP', serif; font-size: 0.95rem; font-weight: 700; color: var(--navy); margin-bottom: 0.3rem; }
+  .company-note-card-industry { font-size: 0.72rem; color: var(--gold); font-weight: 600; letter-spacing: 0.08em; margin-bottom: 0.5rem; }
+  .company-note-card-preview { font-size: 0.78rem; color: var(--text-muted); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .company-note-card-arrow { font-size: 0.72rem; color: var(--navy); margin-top: 0.6rem; }
+  @media (max-width: 760px) { .company-notes-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 500px) { .company-notes-grid { grid-template-columns: 1fr; } }
+
   /* ===== CORPORATE EVENT LIST ===== */
   .event-list { display: flex; flex-direction: column; gap: 1px; background: rgba(10,26,62,0.08); }
   .event-row {
@@ -381,6 +456,25 @@
       <p class="sheet-note" id="event-note"></p>
     </div>
 
+    <!-- 企業分析ノート検索 -->
+    <div class="m-section">
+      <div class="m-section-header">
+        <div class="m-section-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div>
+          <div class="m-section-label">COMPANY NOTES</div>
+          <div class="m-section-title">企業分析ノート</div>
+        </div>
+      </div>
+      <div class="company-search-wrap">
+        <input type="text" id="company-search-input" class="company-search-input" placeholder="企業名で検索..." oninput="searchCompanyNotes()">
+      </div>
+      <div class="company-notes-grid" id="company-notes-grid">
+        <div class="m-empty">企業名を入力して検索してください。</div>
+      </div>
+    </div>
+
     <!-- ③ イベント先行案内 -->
     <div class="m-section">
       <div class="m-section-header">
@@ -435,6 +529,20 @@
   </div>
 </div>
 
+<!-- COMPANY NOTE MODAL -->
+<div class="modal-overlay" id="company-modal" onclick="closeModal(event)">
+  <div class="modal-box" id="modal-box">
+    <div class="modal-header">
+      <div>
+        <div class="modal-company-name" id="modal-company-name">–</div>
+        <div class="modal-industry" id="modal-industry"></div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
 <script>
   // ===== パスワード設定 =====
   const PASSWORD = 'keio2025'; // ← ここを変更してください
@@ -445,6 +553,7 @@
   const FILES_CSV     = 'https://docs.google.com/spreadsheets/d/1N-9COcRmmf1TeNU1EHqyGqFzHzn02ngNlPXAsBbtnsg/export?format=csv&gid=0'; // 列: ファイル名, 説明, リンクURL, 更新日
   const BOOKS_CSV     = 'https://docs.google.com/spreadsheets/d/1hLFipZMnS03sc5aWb_pmCKXBN7utQaAQRXImg4uQhrs/export?format=csv&gid=0';
   const EVENT_CSV     = 'https://docs.google.com/spreadsheets/d/1lr-FNeqRi5l41BafVJRc9Upkwn0VpLNmBvlM7moIgw8/export?format=csv&gid=0';
+  const COMPANY_CSV   = 'https://docs.google.com/spreadsheets/d/1axjcyNPqBiD4SiNhxDx3NaVALelMEkMt2x2ng0Sk7Ww/export?format=csv&gid=0';
   const LENDING_FORM  = 'https://docs.google.com/forms/d/e/1FAIpQLScmV_ubANH5RNIHD_wEH3yakHbs5YqdegrPysSfpFo4veAg4Q/viewform'; // 列: タイトル, 著者, 状態(貸出可/貸出中), 現在の保有者
 
   function checkPassword() {
@@ -632,7 +741,8 @@
         const hasBenefit = r[6] && r[6].trim() !== '' && r[6].trim() !== 'なし';
         const isOnline = (r[3] || '').includes('オンライン');
 
-        return `<div class="event-row" style="${isPast ? 'opacity:0.45;' : ''}">
+        const noteExists = findNote(r[4]);
+        return `<div class="event-row ${noteExists ? 'has-note' : ''}" style="${isPast ? 'opacity:0.45;' : ''}" ${noteExists ? `onclick="openModal('${(r[4]||'').replace(/'/g, "\'")}')"` : ''}>
           <div class="event-date-block">
             <div class="event-date-main">${dateStr}</div>
             <div class="event-date-time">${r[1] || ''}</div>
@@ -653,6 +763,7 @@
             </div>
           </div>
           <div class="event-actions">
+            ${noteExists ? '<span class="note-badge">📋 企業ノートあり</span>' : ''}
             ${hasBenefit ? `<span class="event-benefit">🎁 ${r[6].trim()}さん紹介特典あり</span>` : ''}
             ${hasLink
               ? `<a href="${r[5]}" target="_blank" class="event-apply-btn">申し込む →</a>`
@@ -751,8 +862,94 @@
     if (!BOOKS_CSV) note.textContent = '※ サンプルデータです。スプシURLを設定してください。';
   }
 
+
+  // ===== 企業分析ノート =====
+  let companyNotes = [];
+
+  async function loadCompanyNotes() {
+    if (!COMPANY_CSV) return;
+    try {
+      companyNotes = await fetchCSV(COMPANY_CSV);
+    } catch(e) { console.warn('企業分析ノート読み込み失敗', e); }
+  }
+
+  function findNote(companyName) {
+    if (!companyName || !companyNotes.length) return null;
+    const q = companyName.trim();
+    return companyNotes.find(r => {
+      const name = (r[0] || '').trim();
+      if (!name) return false;
+      return name.includes(q) || q.includes(name);
+    }) || null;
+  }
+
+  function searchCompanyNotes() {
+    const q = document.getElementById('company-search-input').value.trim();
+    const grid = document.getElementById('company-notes-grid');
+    if (!q) {
+      grid.innerHTML = '<div class="m-empty">企業名を入力して検索してください。</div>';
+      return;
+    }
+    const results = companyNotes.filter(r => {
+      const name = (r[0] || '').trim();
+      return name && name.includes(q);
+    });
+    if (!results.length) {
+      grid.innerHTML = '<div class="m-empty" style="grid-column:1/-1;">「' + q + '」に一致する企業ノートが見つかりませんでした。</div>';
+      return;
+    }
+    grid.innerHTML = results.map(r => {
+      const preview = [r[2], r[3], r[4]].filter(Boolean).join(' ／ ');
+      return `<div class="company-note-card" onclick="openModal('${(r[0]||'').replace(/'/g,"\\'")}')">
+        <div class="company-note-card-name">${r[0]||'–'}</div>
+        ${r[1] ? `<div class="company-note-card-industry">${r[1]}</div>` : ''}
+        ${preview ? `<div class="company-note-card-preview">${preview}</div>` : ''}
+        <div class="company-note-card-arrow">ノートを見る →</div>
+      </div>`;
+    }).join('');
+  }
+
+  function openModal(companyName) {
+    const note = findNote(companyName);
+    document.getElementById('modal-company-name').textContent = companyName || '–';
+    document.getElementById('modal-industry').textContent = note ? (note[1] || '') : '';
+    const body = document.getElementById('modal-body');
+    if (!note) {
+      body.innerHTML = '<div class="modal-no-data">この企業の分析ノートはまだありません。</div>';
+    } else {
+      const fields = [
+        { label: '事業内容メモ', value: note[2] },
+        { label: '強み・弱み', value: note[3] },
+        { label: '志望動機メモ', value: note[4] },
+        { label: '選考フロー', value: note[5] },
+        { label: '参考URL', value: note[6], isUrl: true },
+      ];
+      body.innerHTML = fields.map(f => {
+        if (!f.value) return '';
+        const val = f.isUrl
+          ? `<a href="${f.value}" target="_blank" class="modal-url">${f.value}</a>`
+          : `<div class="modal-field-content">${f.value}</div>`;
+        return `<div class="modal-field">
+          <div class="modal-field-label">${f.label}</div>
+          ${val}
+        </div>`;
+      }).filter(Boolean).join('') || '<div class="modal-no-data">内容がまだ入力されていません。</div>';
+    }
+    document.getElementById('company-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(e) {
+    if (e.target === document.getElementById('company-modal')) closeModalDirect();
+  }
+  function closeModalDirect() {
+    document.getElementById('company-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
+
   async function loadAll() {
-    await Promise.all([loadSelection(), loadEvents(), loadPriority(), loadFiles(), loadBooks()]);
+    await Promise.all([loadCompanyNotes(), loadSelection(), loadEvents(), loadPriority(), loadFiles(), loadBooks()]);
   }
 </script>
 </body>
