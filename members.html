@@ -635,7 +635,7 @@
         return `<div class="event-row" style="${isPast ? 'opacity:0.45;' : ''}">
           <div class="event-date-block">
             <div class="event-date-main">${dateStr}</div>
-            <div class="event-date-time" style="${!r[1] ? 'color:var(--text-muted);opacity:0.6;' : ''}">${timeStr}</div>
+            <div class="event-date-time">${r[1] || ''}</div>
           </div>
           <div>
             <div class="event-name">${r[2] || '–'}</div>
@@ -643,7 +643,7 @@
               ${r[4] ? `<span class="event-meta-item">🏢 ${r[4]}</span>` : ''}
               ${r[3] ? `<span class="event-meta-item">${isOnline ? '💻' : '📍'} ${r[3]}</span>` : ''}
               ${(() => {
-                if (!r[7]) return `<span class="event-meta-item" style="color:var(--text-muted);opacity:0.6;">📅 締切未定</span>`;
+                if (!r[7]) return '';
                 const dl = new Date(r[7].replace(/\//g,'-'));
                 const diff = Math.ceil((dl - today) / (1000*60*60*24));
                 if (diff < 0) return `<span class="event-meta-item" style="color:var(--text-muted);">締切済み</span>`;
