@@ -417,12 +417,14 @@
     if (!rows.length) { el.innerHTML = '<div class="m-empty">現在の先行案内はありません。</div>'; return; }
     const WEEKDAYS = ['日','月','火','水','木','金','土'];
     el.innerHTML = rows.map(r => {
-      const d = r[0] ? new Date(r[0].replace(/\//g,'-')) : null;
-      const month = d ? d.toLocaleDateString('ja-JP',{month:'short'}) : '–';
-      const day = d ? d.getDate() : '–';
-      const wd = d ? WEEKDAYS[d.getDay()] + '曜' : '';
+      const isUndated = !r[0] || r[0] === '日付未定' || r[0] === '未定' || r[0] === 'TBD';
+      const d = isUndated ? null : new Date(r[0].replace(/\//g,'-'));
+      const month = (!isUndated && d && !isNaN(d)) ? d.toLocaleDateString('ja-JP',{month:'short'}) : '';
+      const day = isUndated ? '未定' : (d && !isNaN(d) ? d.getDate() : '–');
+      const wd = (!isUndated && d && !isNaN(d)) ? WEEKDAYS[d.getDay()] + '曜' : '';
+      const dayStyle = isUndated ? 'font-family:\'Noto Sans JP\',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text-muted);' : '';
       return `<div class="priority-row">
-        <div><div class="priority-date-month">${month}</div><div class="priority-date-num">${day}</div><div style="font-size:0.65rem;color:var(--text-muted)">${wd}</div></div>
+        <div><div class="priority-date-month">${month}</div><div class="priority-date-num" style="${dayStyle}">${day}</div><div style="font-size:0.65rem;color:var(--text-muted)">${wd}</div></div>
         <div><div class="priority-title">${r[1]||'–'}</div><div class="priority-meta">${r[2]||''}</div></div>
         <div><span class="priority-badge">先行案内</span></div>
       </div>`;
