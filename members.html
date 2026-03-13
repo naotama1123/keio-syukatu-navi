@@ -627,9 +627,7 @@
           ? `${r[0]}（${WEEKDAYS[d.getDay()]}）`
           : '日付未定';
         const timeStr = r[1] ? r[1] : '時間未定';
-        const isPast = r[7]
-          ? new Date(r[7].replace(/\//g,'-')) < today
-          : (d && d < today);
+        const isPast = r[7] ? new Date(r[7].replace(/\//g,'-')) < today : false;
         const hasLink = r[5]?.startsWith('http');
         const hasBenefit = r[6] && r[6].trim() !== '' && r[6].trim() !== 'なし';
         const isOnline = (r[3] || '').includes('オンライン');
@@ -642,8 +640,8 @@
           <div>
             <div class="event-name">${r[2] || '–'}</div>
             <div class="event-meta">
-              ${r[4] ? `<span class="event-meta-item">🏢 ${r[4]}</span>` : ''}
-              ${r[3] ? `<span class="event-meta-item">${isOnline ? '💻' : '📍'} ${r[3]}</span>` : ''}
+              ${r[4] ? `<span class="event-meta-item">・${r[4]}</span>` : ''}
+              ${r[3] ? `<span class="event-meta-item">・${r[3]}</span>` : ''}
               ${(() => {
                 if (!r[7]) return '';
                 const dl = new Date(r[7].replace(/\//g,'-'));
