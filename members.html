@@ -606,9 +606,21 @@
   async function fetchCSV(url) {
     const res = await fetch(url);
     const text = await res.text();
-    return text.trim().split('\n')
-      .map(l => l.split(',').map(c => c.trim().replace(/^"|"$/g, '')))
-      .slice(1);
+    return text.trim().split('\n').map(line => {
+      const result = [];
+      let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+          else inQ = !inQ;
+        } else if (ch === ',' && !inQ) {
+          result.push(cur.trim()); cur = '';
+        } else { cur += ch; }
+      }
+      result.push(cur.trim());
+      return result;
+    }).slice(1);
   }
 
   // ① 選考情報
