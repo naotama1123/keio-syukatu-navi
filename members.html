@@ -663,6 +663,9 @@
         const urgent = diff >= 0 && diff <= 7;
         const deadlineLabel = r[1] ? (urgent ? `⚠ ${r[1]}（残${diff}日）` : r[1]) : '未定';
         const featureTag = (r[5] && r[5] !== 'なし') ? ` <span style="font-size:0.68rem;color:var(--crimson);margin-left:0.3rem;">${r[5]}</span>` : '';
+        // 企業名から「（...）」を除いてノート検索
+        const companyNameClean = (r[0]||'').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').trim();
+        const selNote = findNote(companyNameClean);
         return `<div class="selection-row">
           <div>
             <div class="sel-company">${r[0]||'–'}</div>
@@ -670,7 +673,10 @@
           </div>
           <div class="sel-deadline ${urgent ? 'urgent' : ''}">${deadlineLabel}</div>
           <div><span class="sel-tag ${tagClass}">${r[2]||'–'}</span></div>
-          <div>${hasLink ? `<a href="${r[3]}" target="_blank" class="sel-link">開く →</a>` : '–'}</div>
+          <div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-start;">
+            ${hasLink ? `<a href="${r[3]}" target="_blank" class="sel-link">開く →</a>` : '–'}
+            ${selNote ? `<button onclick="openModal('${companyNameClean.replace(/'/g,"\\'")}');event.stopPropagation();" style="font-size:0.68rem;padding:0.2rem 0.5rem;background:rgba(10,26,62,0.07);border:1px solid rgba(10,26,62,0.15);color:var(--navy);cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-weight:600;letter-spacing:0.04em;">📋 企業ノート</button>` : ''}
+          </div>
         </div>`;
       }).join('');
   }
