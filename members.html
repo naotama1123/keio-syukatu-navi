@@ -303,6 +303,7 @@
   .quiz-finish-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem; }
   @media (max-width: 500px) { .quiz-choices { grid-template-columns: 1fr; } }
 
+  @keyframes spin { to { transform: rotate(360deg); } }
   /* ===== COMPANY NOTES SEARCH ===== */
   .company-search-wrap { margin-bottom: 1rem; }
   .company-search-input {
@@ -644,7 +645,9 @@
   const BOOKS_CSV     = 'https://docs.google.com/spreadsheets/d/1hLFipZMnS03sc5aWb_pmCKXBN7utQaAQRXImg4uQhrs/export?format=csv&gid=0';
   const EVENT_CSV     = 'https://docs.google.com/spreadsheets/d/1lr-FNeqRi5l41BafVJRc9Upkwn0VpLNmBvlM7moIgw8/export?format=csv&gid=0';
   const COMPANY_CSV   = 'https://docs.google.com/spreadsheets/d/1axjcyNPqBiD4SiNhxDx3NaVALelMEkMt2x2ng0Sk7Ww/export?format=csv&gid=0';
-  const LENDING_FORM  = 'https://docs.google.com/forms/d/e/1FAIpQLScmV_ubANH5RNIHD_wEH3yakHbs5YqdegrPysSfpFo4veAg4Q/viewform'; // 列: タイトル, 著者, 状態(貸出可/貸出中), 現在の保有者
+  const LENDING_FORM  = 'https://docs.google.com/forms/d/e/1FAIpQLScmV_ubANH5RNIHD_wEH3yakHbs5YqdegrPysSfpFo4veAg4Q/viewform';
+  const ANTHROPIC_API_KEY = ''; // ← AnthropicのAPIキーを貼る（console.anthropic.com で取得）
+  const GAS_SAVE_URL = '';      // ← GASのウェブアプリURLを貼る（スプシ保存用・後で設定） // 列: タイトル, 著者, 状態(貸出可/貸出中), 現在の保有者
 
   function checkPassword() {
     const input = document.getElementById('pw-input').value;
@@ -680,10 +683,10 @@
   if (sessionStorage.getItem('members_auth') === '1') showMembers();
 
   async function fetchCSV(url) {
-    const res = await fetch(url);
+    const res = await fetch(url, { redirect: 'follow' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
-    if (text.includes('<html')) throw new Error('アクセス拒否（スプシの共有設定を確認してください）');
+    if (text.includes('<!DOCTYPE') || text.includes('<html')) throw new Error('スプシの共有設定を確認してください');
     return text.trim().split('\n').map(line => {
       const result = [];
       let cur = '', inQ = false;
@@ -717,7 +720,12 @@
       ['〇〇テック（インターン）', '2025/06/15', 'インターン', '', 'ソフトウェア', 'ベンチャー'],
       ['△△スタートアップ', '2025/06/25', 'インターン', '', 'サービス・インフラ', 'ベンチャー'],
     ];
-    selectionRows = SELECTION_CSV ? (await fetchCSV(SELECTION_CSV)) : sample;
+    try {
+      selectionRows = SELECTION_CSV ? (await fetchCSV(SELECTION_CSV)) : sample;
+    } catch(err) {
+      el.innerHTML = `<div class="m-empty" style="color:var(--crimson);">⚠ 読み込みエラー: ${err.message}</div>`;
+      console.error('SELECTION_CSV:', err); return;
+    }
     if (!selectionRows.length) { el.innerHTML = '<div class="m-empty">情報はまだありません。</div>'; return; }
     renderSelection();
     if (!SELECTION_CSV) note.textContent = '※ サンプルデータです。スプシの6列目に業界名、7列目に「大手」または「ベンチャー」を入力してください。';
@@ -818,7 +826,12 @@
       ['2025/06/12', '10:00〜12:00', '△△銀行 インターン説明会', 'オフライン（三田）', '△△銀行', '', '', '2025/06/10'],
       ['2025/06/20', '18:00〜20:00', '□□テック エンジニア交流会', 'オンライン', '□□テック', 'https://example.com', '鈴木', ''],
     ];
-    eventRows = EVENT_CSV ? (await fetchCSV(EVENT_CSV)) : sample;
+    try {
+      eventRows = EVENT_CSV ? (await fetchCSV(EVENT_CSV)) : sample;
+    } catch(err) {
+      el.innerHTML = `<div class="m-empty" style="color:var(--crimson);">⚠ 読み込みエラー: ${err.message}</div>`;
+      console.error('EVENT_CSV:', err); return;
+    }
     if (!eventRows.length) { el.innerHTML = '<div class="m-empty">イベント情報はまだありません。</div>'; return; }
     renderEvents();
     if (!EVENT_CSV) note.textContent = '※ サンプルデータです。スプシURLを設定してください。';
@@ -898,7 +911,13 @@
       ['2025/06/01', 'GD練習会（先行募集）', 'オンライン・先着10名'],
       ['2025/06/15', '業界研究会（会員限定）', '三田キャンパス'],
     ];
-    const rows = PRIORITY_CSV ? (await fetchCSV(PRIORITY_CSV)) : sample;
+    let rows;
+    try {
+      rows = PRIORITY_CSV ? (await fetchCSV(PRIORITY_CSV)) : sample;
+    } catch(err) {
+      el.innerHTML = `<div class="m-empty" style="color:var(--crimson);">⚠ 読み込みエラー: ${err.message}</div>`;
+      console.error('PRIORITY_CSV:', err); return;
+    }
     if (!rows.length) { el.innerHTML = '<div class="m-empty">現在の先行案内はありません。</div>'; return; }
     const WEEKDAYS = ['日','月','火','水','木','金','土'];
     el.innerHTML = rows.map(r => {
@@ -926,7 +945,13 @@
       ['ES例文集 vol.1', 'メンバー提供のES実例', '', '2025/05/10'],
       ['面接頻出質問リスト', 'よく聞かれる質問と回答例', '', '2025/05/15'],
     ];
-    const rows = FILES_CSV ? (await fetchCSV(FILES_CSV)) : sample;
+    let rows;
+    try {
+      rows = FILES_CSV ? (await fetchCSV(FILES_CSV)) : sample;
+    } catch(err) {
+      el.innerHTML = `<div class="m-empty" style="color:var(--crimson);">⚠ 読み込みエラー: ${err.message}</div>`;
+      console.error('FILES_CSV:', err); return;
+    }
     if (!rows.length) { el.innerHTML = '<div class="m-empty" style="grid-column:1/-1;">資料はまだありません。</div>'; return; }
     el.innerHTML = rows.map(r => {
       const hasLink = r[2]?.startsWith('http');
@@ -951,7 +976,13 @@
       ['絶対内定2026', '杉村太郎', '貸出可', ''],
       ['1分で話せ', '伊藤羊一', '貸出中', '鈴木'],
     ];
-    const rows = BOOKS_CSV ? (await fetchCSV(BOOKS_CSV)) : sample;
+    let rows;
+    try {
+      rows = BOOKS_CSV ? (await fetchCSV(BOOKS_CSV)) : sample;
+    } catch(err) {
+      el.innerHTML = `<div class="m-empty" style="color:var(--crimson);">⚠ 読み込みエラー: ${err.message}</div>`;
+      console.error('BOOKS_CSV:', err); return;
+    }
     if (!rows.length) { el.innerHTML = '<div class="m-empty" style="grid-column:1/-1;">本の情報はまだありません。</div>'; return; }
     el.innerHTML = rows.map(r => {
       const available = !r[2] || r[2].includes('可') || r[2].toLowerCase().includes('available');
@@ -1027,7 +1058,18 @@
       return (name && name.includes(q)) || (industry && industry.includes(q));
     });
     if (!results.length) {
-      grid.innerHTML = '<div class="m-empty" style="grid-column:1/-1;">「' + q + '」に一致する企業ノートが見つかりませんでした。</div>';
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:2rem;">
+        <div style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.2rem;">「${q}」の企業ノートはまだ登録されていません。</div>
+        ${ANTHROPIC_API_KEY
+          ? `<button onclick="generateAndShowNote('${q.replace(/'/g,"\'")}'); event.stopPropagation();"
+              style="padding:0.7rem 1.8rem; background:var(--navy); color:white; border:none;
+              font-family:'Noto Sans JP',sans-serif; font-size:0.85rem; font-weight:600;
+              cursor:pointer; letter-spacing:0.06em;">
+              AI で企業ノートを自動生成する
+            </button>`
+          : '<div style="font-size:0.75rem;color:var(--text-muted);">（ANTHROPIC_API_KEYを設定するとAI自動生成が使えます）</div>'
+        }
+      </div>`;
       return;
     }
     grid.innerHTML = results.map(r => {
@@ -1047,7 +1089,18 @@
     document.getElementById('modal-industry').textContent = note ? (note[1] || '') : '';
     const body = document.getElementById('modal-body');
     if (!note) {
-      body.innerHTML = '<div class="modal-no-data">この企業の分析ノートはまだありません。</div>';
+      body.innerHTML = `<div style="text-align:center; padding:2rem;">
+        <div class="modal-no-data" style="margin-bottom:1.2rem;">この企業の分析ノートはまだ登録されていません。</div>
+        ${ANTHROPIC_API_KEY
+          ? `<button onclick="generateAndShowNote('${(companyName||'').replace(/'/g,"\'")}');"
+              style="padding:0.7rem 1.8rem; background:var(--navy); color:white; border:none;
+              font-family:'Noto Sans JP',sans-serif; font-size:0.85rem; font-weight:600;
+              cursor:pointer; letter-spacing:0.06em;">
+              AI で企業ノートを自動生成する
+            </button>`
+          : ''
+        }
+      </div>`;
     } else {
       const fields = [
         { label: '事業内容メモ', value: note[2] },
@@ -1071,6 +1124,117 @@
     }
     document.getElementById('company-modal').classList.add('open');
     document.body.style.overflow = 'hidden';
+  }
+
+  // ===== AI 企業ノート自動生成 =====
+  async function generateAndShowNote(companyName) {
+    // モーダルを開いてローディング表示
+    document.getElementById('modal-company-name').textContent = companyName;
+    document.getElementById('modal-industry').textContent = '生成中...';
+    const body = document.getElementById('modal-body');
+    body.innerHTML = `<div style="text-align:center; padding:3rem;">
+      <div style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1rem;">Claudeが企業ノートを生成しています...</div>
+      <div style="width:40px; height:40px; border:3px solid rgba(10,26,62,0.1); border-top-color:var(--navy);
+        border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto;"></div>
+    </div>`;
+    document.getElementById('company-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    try {
+      const systemPrompt = `あなたは、就活生向けの「企業分析ノート」を作成するアシスタントです。就活生が企業理解を深め、志望動機や選考対策に活かせる内容にしてください。
+
+各項目の書き方:
+- 業界: 総合デベロッパー・総合商社・広告・メガバンク・SIerなど具体的に
+- 事業内容メモ: 何で稼いでいるか・どの領域に強いか・どんな顧客を相手にしているかがわかるように
+- 強み・弱み: 強みと弱みを分けて箇条書きで
+- 志望動機メモ: 業界志望理由・その会社ならではの特徴・他社比較で語れるポイントなど
+- 選考フロー: ES→Webテスト→GD→面接→最終面接→内々定の順で整理
+- 参考URL: 公式サイト・採用ページ・IRをセミコロン区切りで
+
+文体: 箇条書きベース・就活で使える情報密度・誇張表現は避ける・不明は「要確認」と明記`;
+
+      const userPrompt = `企業名: ${companyName}
+
+以下のJSON形式のみで返してください（前置き不要）:
+{"industry":"","business":"","strength":"","motive":"","process":"","url":""}`;
+
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 1200,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userPrompt }],
+        }),
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+
+      const text = data.content[0].text.trim();
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('生成に失敗しました');
+      const note = JSON.parse(match[0]);
+
+      // 生成結果をメモリに追加（再検索でも表示されるように）
+      const newRow = [companyName, note.industry||'', note.business||'', note.strength||'', note.motive||'', note.process||'', note.url||''];
+      companyNotes.push(newRow);
+
+      // モーダルに表示
+      document.getElementById('modal-industry').textContent = note.industry || '';
+      const fields = [
+        { label: '事業内容メモ', value: note.business },
+        { label: '強み・弱み', value: note.strength },
+        { label: '志望動機メモ', value: note.motive },
+        { label: '選考フロー', value: note.process },
+        { label: '参考URL', value: note.url, isUrl: true },
+      ];
+      body.innerHTML = fields.map(f => {
+        if (!f.value) return '';
+        const val = f.isUrl
+          ? f.value.split(/[|;]/).map(u => u.trim()).filter(Boolean)
+              .map(u => `<a href="${u}" target="_blank" class="modal-url" style="display:block;margin-bottom:0.3rem;">${u}</a>`).join('')
+          : `<div class="modal-field-content">${f.value}</div>`;
+        return `<div class="modal-field"><div class="modal-field-label">${f.label}</div>${val}</div>`;
+      }).filter(Boolean).join('') +
+      // スプシ保存ボタン
+      `<div style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid rgba(10,26,62,0.1); text-align:center;">
+        <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:0.8rem;">※ このノートはまだスプシに保存されていません</div>
+        <button onclick="saveNoteToSheet('${companyName.replace(/'/g,"\'")}', ${JSON.stringify(note).replace(/'/g,"\'")})"
+          style="padding:0.6rem 1.5rem; background:rgba(10,26,62,0.07); border:1px solid rgba(10,26,62,0.2);
+          color:var(--navy); font-family:'Noto Sans JP',sans-serif; font-size:0.78rem;
+          font-weight:600; cursor:pointer; letter-spacing:0.05em;">
+          スプシに保存する
+        </button>
+      </div>`;
+
+    } catch(err) {
+      body.innerHTML = `<div class="modal-no-data" style="color:var(--crimson);">⚠ 生成エラー: ${err.message}</div>`;
+    }
+  }
+
+  async function saveNoteToSheet(companyName, note) {
+    if (!GAS_SAVE_URL) {
+      alert('GAS_SAVE_URLを設定するとスプシへの自動保存ができます。\n（現在は手動でスプシに追加してください）');
+      return;
+    }
+    try {
+      const res = await fetch(GAS_SAVE_URL, {
+        method: 'POST',
+        body: JSON.stringify({ companyName, ...note }),
+      });
+      const result = await res.json();
+      if (result.status === 'ok') alert('スプシに保存しました！');
+      else throw new Error(result.message);
+    } catch(err) {
+      alert('保存エラー: ' + err.message);
+    }
   }
 
   function closeModal(e) {
