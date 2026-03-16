@@ -356,11 +356,11 @@
         if (!text.includes('<!DOCTYPE')) {
           rows = text.trim().split('\n').map(l => l.split(',').map(c => c.trim().replace(/^"|"$/g,''))).slice(1).filter(r => r[0]);
         }
-      } catch(e) { rows = sample; }
+      } catch(e) { rows = []; }
     }
 
     if (!rows.length) {
-      el.innerHTML = '<div class="event-card" style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.3);font-size:0.82rem;">イベント情報はまだありません。</div>';
+      el.innerHTML = '<div class="event-card" style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,0.4);font-size:0.85rem;padding:3rem;">現在イベントを準備中です。<br>決まり次第お知らせします。</div>';
       return;
     }
     el.innerHTML = rows.map(r => `
