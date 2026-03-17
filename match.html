@@ -106,6 +106,21 @@
   .feedback.pop { animation: fbpop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
   @keyframes fbpop { 0%{transform:translate(-50%,-50%) scale(0);opacity:1} 60%{transform:translate(-50%,-50%) scale(1.2);opacity:1} 100%{transform:translate(-50%,-50%) scale(1);opacity:0} }
 
+
+  /* Deadline Banner */
+  .deadline-alert {
+    display: none; position: fixed; top: 56px; left: 0; right: 0; z-index: 90;
+    background: var(--crimson); padding: 0.7rem 1.2rem;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .deadline-alert:hover { background: #e8001f; }
+  .deadline-alert-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .deadline-alert-text { font-size: 0.78rem; color: white; font-weight: 700; line-height: 1.5; }
+  .deadline-alert-sub { font-size: 0.68rem; color: rgba(255,255,255,0.7); font-weight: 400; margin-top: 0.1rem; }
+  .deadline-alert-arrow { font-size: 0.82rem; color: rgba(255,255,255,0.7); flex-shrink: 0; }
+  .deadline-alert-dismiss { background: none; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); font-size: 0.65rem; padding: 0.15rem 0.5rem; cursor: pointer; flex-shrink: 0; font-family: 'Noto Sans JP', sans-serif; }
+  .deadline-alert-dismiss:hover { background: rgba(255,255,255,0.1); }
+
   /* Empty */
   .empty { display:none; text-align:center; padding:2rem; max-width:360px; width:100%; }
   .empty-icon { font-size:3rem; margin-bottom:1rem; }
@@ -172,6 +187,20 @@
   <div class="nav-title">企業マッチング</div>
   <div class="like-pill" onclick="openModal()">♥ <span id="like-count">0</span></div>
 </nav>
+
+<!-- DEADLINE ALERT -->
+<div class="deadline-alert" id="deadline-alert" onclick="openModal()">
+  <div class="deadline-alert-inner">
+    <div>
+      <div class="deadline-alert-text" id="deadline-alert-text"></div>
+      <div class="deadline-alert-sub" id="deadline-alert-sub"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+      <span class="deadline-alert-arrow">リストを見る →</span>
+      <button class="deadline-alert-dismiss" onclick="dismissAlert(event)">✕</button>
+    </div>
+  </div>
+</div>
 
 <div class="feedback" id="feedback"></div>
 
@@ -259,12 +288,14 @@ async function init() {
     companies = rows.filter(r=>r[0]&&r[0].trim()).map(r=>({
       name:r[0]||'',industry:r[1]||'',business:r[2]||'',
       strength:r[3]||'',motive:r[4]||'',process:r[5]||'',url:r[6]||'',
+      alias:r[7]||'', // H列: 一般呼称
+      strength:r[3]||'',motive:r[4]||'',process:r[5]||'',url:r[6]||'',
     }));
     companies.sort(()=>Math.random()-0.5);
   } catch(e) { companies = sample(); }
   document.getElementById('loading').style.display='none';
   const ui=document.getElementById('card-ui'); ui.style.display='flex';
-  updateCount(); render();
+  updateCount(); render(); checkDeadlines();
 }
 
 function getNext() {
@@ -472,7 +503,9 @@ function openNote() {
     return false;
   }
 function openNoteModal(name) {
-  const c = [...companies, ...liked].find(x => x.name === name);
+  const c = [...companies, ...liked].find(x =>
+    companyMatch(x.name, name) || (x.alias && companyMatch(x.alias, name))
+  );
   if (!c) return;
   document.getElementById('note-modal-name').textContent = c.name;
   document.getElementById('note-modal-ind').textContent = c.industry || '';
@@ -529,6 +562,57 @@ function openNoteModal(name) {
 }
 function closeNoteModal() { document.getElementById('note-overlay').classList.remove('open'); }
 function noteOverlayClick(e) { if (e.target === document.getElementById('note-overlay')) closeNoteModal(); }
+
+
+function checkDeadlines() {
+  if (!liked.length || !selectionRows.length) return;
+  const today = new Date();
+  const alerts = [];
+
+  liked.forEach(c => {
+    const matches = selectionRows.filter(r => {
+      const rowName = (r[0]||'').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').trim();
+      const alias = r[7] || '';
+      return selectionMatch(rowName, alias, c.name);
+    });
+    matches.forEach(r => {
+      if (!r[1]) return;
+      const d = new Date(r[1].replace(/\//g,'-'));
+      const diff = Math.ceil((d - today) / (1000*60*60*24));
+      if (diff >= 0 && diff <= 7) {
+        alerts.push({ company: c.name, title: r[0], deadline: r[1], diff, tag: r[2]||'' });
+      }
+    });
+  });
+
+  if (!alerts.length) return;
+
+  // 締切が近い順にソート
+  alerts.sort((a,b) => a.diff - b.diff);
+
+  const banner = document.getElementById('deadline-alert');
+  const textEl = document.getElementById('deadline-alert-text');
+  const subEl = document.getElementById('deadline-alert-sub');
+
+  if (alerts.length === 1) {
+    const a = alerts[0];
+    textEl.textContent = `⚠ ${a.company} の締切まで残${a.diff}日`;
+    subEl.textContent = `${a.title}（${a.tag}）`;
+  } else {
+    textEl.textContent = `⚠ 気になる企業 ${alerts.length} 社の締切が近づいています`;
+    subEl.textContent = alerts.map(a => `${a.company}（残${a.diff}日）`).join('・');
+  }
+  banner.style.display = 'block';
+
+  // バナー分だけmainをずらす
+  document.querySelector('.main').style.paddingTop = '2.8rem';
+}
+
+function dismissAlert(e) {
+  e.stopPropagation();
+  document.getElementById('deadline-alert').style.display = 'none';
+  document.querySelector('.main').style.paddingTop = '';
+}
 
 function openModal() {
   document.getElementById('modal-cnt').textContent=liked.length+'社';
