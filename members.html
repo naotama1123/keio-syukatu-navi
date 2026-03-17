@@ -126,6 +126,22 @@
   }
   .submit-selection-btn:hover { background: var(--navy); color: white; border-color: var(--navy); }
 
+  /* ===== DEADLINE ALERT BANNER ===== */
+  .deadline-alert {
+    display: none;
+    background: var(--crimson); padding: 0.75rem 1.5rem;
+    cursor: pointer; transition: background 0.2s;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .deadline-alert:hover { background: #e8001f; }
+  .deadline-alert-inner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .deadline-alert-title { font-size: 0.82rem; color: white; font-weight: 700; }
+  .deadline-alert-companies { font-size: 0.7rem; color: rgba(255,255,255,0.75); margin-top: 0.15rem; line-height: 1.6; }
+  .deadline-alert-right { display: flex; align-items: center; gap: 0.8rem; flex-shrink: 0; }
+  .deadline-alert-link { font-size: 0.72rem; color: rgba(255,255,255,0.8); white-space: nowrap; }
+  .deadline-alert-dismiss { background: none; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); font-size: 0.65rem; padding: 0.15rem 0.5rem; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; }
+  .deadline-alert-dismiss:hover { background: rgba(255,255,255,0.1); }
+
   /* ===== WEEKLY DEADLINE BANNER ===== */
   .deadline-banner {
     background: var(--navy); border-left: 4px solid var(--crimson);
@@ -365,6 +381,7 @@
   .notice-title { font-size: 0.88rem; font-weight: 700; color: var(--navy); margin-bottom: 0.2rem; }
   .notice-content { font-size: 0.78rem; color: var(--text-muted); line-height: 1.7; }
 
+  @keyframes genSpin { to { transform: rotate(360deg); } }
   /* ===== COMPANY NOTES SEARCH ===== */
   .company-search-wrap { margin-bottom: 1rem; }
   .company-search-input {
@@ -483,6 +500,20 @@
     <a href="index.html" class="nav-back">← トップに戻る</a>
   </div>
 </nav>
+
+<!-- DEADLINE ALERT BANNER -->
+<div class="deadline-alert" id="deadline-alert" onclick="scrollToSelection()">
+  <div class="deadline-alert-inner">
+    <div>
+      <div class="deadline-alert-title" id="deadline-alert-title"></div>
+      <div class="deadline-alert-companies" id="deadline-alert-companies"></div>
+    </div>
+    <div class="deadline-alert-right">
+      <span class="deadline-alert-link">選考情報を見る →</span>
+      <button class="deadline-alert-dismiss" onclick="dismissAlert(event)">✕</button>
+    </div>
+  </div>
+</div>
 
 <!-- PASSWORD SCREEN -->
 <div id="password-screen">
@@ -727,6 +758,7 @@
   const COMPANY_CSV   = 'https://docs.google.com/spreadsheets/d/1axjcyNPqBiD4SiNhxDx3NaVALelMEkMt2x2ng0Sk7Ww/export?format=csv&gid=0';
   const NOTICE_CSV     = ''; // ← お知らせスプシのCSV URLを貼る（列: 日付・タイトル・内容・タグ）
   const SELECTION_FORM = ''; // ← 選考情報投稿フォームのURLを貼る
+  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbx_45tqlJjLHY4IqhD4GUIslHMKsa46czSdOBlGnCWNkCzcOzhpoDTOMuze1IcmeCdHxQ/exec';
   const LENDING_FORM  = 'https://docs.google.com/forms/d/e/1FAIpQLScmV_ubANH5RNIHD_wEH3yakHbs5YqdegrPysSfpFo4veAg4Q/viewform'; // 列: タイトル, 著者, 状態(貸出可/貸出中), 現在の保有者
 
   function checkPassword() {
@@ -808,7 +840,64 @@
     }
     if (!selectionRows.length) { el.innerHTML = '<div class="m-empty">情報はまだありません。</div>'; return; }
     renderSelection();
+    checkDeadlineAlert();
     if (!SELECTION_CSV) note.textContent = '※ サンプルデータです。スプシの6列目に業界名、7列目に「大手」または「ベンチャー」を入力してください。';
+  }
+
+
+  function checkDeadlineAlert() {
+    if (!selectionRows.length) return;
+
+    // localStorageから気になりリストを読む（match.htmlと共有）
+    const liked = JSON.parse(localStorage.getItem('keio_navi_liked_v2') || '[]');
+    const today = new Date();
+
+    let urgent = [];
+
+    if (liked.length) {
+      // 気になりリストがある場合 → その企業だけ通知
+      liked.forEach(c => {
+        selectionRows.forEach(r => {
+          if (!r[0] || !r[1]) return;
+          const rowName = (r[0]||'').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').trim();
+          if (!companyMatch(rowName, c.name)) return;
+          const d = new Date(r[1].replace(/\//g,'-'));
+          if (isNaN(d)) return;
+          const diff = Math.ceil((d - today) / (1000*60*60*24));
+          if (diff >= 0 && diff <= 7) urgent.push({ name: r[0], diff });
+        });
+      });
+    } else {
+      // 気になりリストがない場合 → 全企業の締切7日以内を通知
+      selectionRows.forEach(r => {
+        if (!r[0] || !r[1]) return;
+        const d = new Date(r[1].replace(/\//g,'-'));
+        if (isNaN(d)) return;
+        const diff = Math.ceil((d - today) / (1000*60*60*24));
+        if (diff >= 0 && diff <= 7) urgent.push({ name: r[0], diff });
+      });
+    }
+
+    if (!urgent.length) return;
+    urgent.sort((a,b) => a.diff - b.diff);
+
+    const banner = document.getElementById('deadline-alert');
+    const titleEl = document.getElementById('deadline-alert-title');
+    const companiesEl = document.getElementById('deadline-alert-companies');
+
+    const prefix = liked.length ? '気になり企業' : '選考';
+    titleEl.textContent = `⚠ ${prefix}の締切が近い企業が ${urgent.length} 社あります`;
+    companiesEl.textContent = urgent.map(a => `${a.name}（残${a.diff}日）`).join('　・　');
+    banner.style.display = 'block';
+  }
+
+  function scrollToSelection() {
+    document.querySelector('.m-section')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function dismissAlert(e) {
+    e.stopPropagation();
+    document.getElementById('deadline-alert').style.display = 'none';
   }
 
   function renderDeadlineBanner(today) {
@@ -1197,7 +1286,19 @@
       return (name && name.includes(q)) || (industry && industry.includes(q));
     });
     if (!results.length) {
-      grid.innerHTML = '<div class="m-empty" style="grid-column:1/-1;">「' + q + '」に一致する企業ノートが見つかりませんでした。</div>';
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:2rem;">
+        <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.2rem;">「${q}」の企業ノートはまだ登録されていません。</div>
+        ${GAS_PROXY_URL
+          ? `<button onclick="generateNote('${q.replace(/'/g,"\\'")}');"
+              style="padding:0.7rem 1.8rem; background:var(--navy); color:white; border:none;
+              font-family:'Noto Sans JP',sans-serif; font-size:0.85rem; font-weight:600;
+              cursor:pointer; letter-spacing:0.06em; transition:background 0.2s;"
+              onmouseover="this.style.background='var(--crimson)'" onmouseout="this.style.background='var(--navy)'">
+              Claudeで企業ノートを自動生成する
+            </button>`
+          : ''
+        }
+      </div>`;
       return;
     }
     grid.innerHTML = results.map(r => {
@@ -1217,7 +1318,18 @@
     document.getElementById('modal-industry').textContent = note ? (note[1] || '') : '';
     const body = document.getElementById('modal-body');
     if (!note) {
-      body.innerHTML = '<div class="modal-no-data">この企業の分析ノートはまだありません。</div>';
+      body.innerHTML = `<div style="text-align:center; padding:2.5rem 1rem;">
+        <div class="modal-no-data" style="margin-bottom:1.2rem;">この企業の分析ノートはまだ登録されていません。</div>
+        ${GAS_PROXY_URL
+          ? `<button onclick="generateNote('${(companyName||'').replace(/'/g,"\\'")}');"
+              style="padding:0.7rem 1.8rem; background:var(--navy); color:white; border:none;
+              font-family:'Noto Sans JP',sans-serif; font-size:0.85rem; font-weight:600;
+              cursor:pointer; letter-spacing:0.06em;">
+              Claudeで企業ノートを自動生成する
+            </button>`
+          : ''
+        }
+      </div>`;
     } else {
       const fields = [
         { label: '事業内容メモ', value: note[2] },
@@ -1241,6 +1353,84 @@
     }
     document.getElementById('company-modal').classList.add('open');
     document.body.style.overflow = 'hidden';
+  }
+
+  // ===== AI 企業ノート自動生成（GASプロキシ経由） =====
+  async function generateNote(companyName) {
+    // モーダルを開いてローディング表示
+    document.getElementById('modal-company-name').textContent = companyName;
+    document.getElementById('modal-industry').textContent = '生成中...';
+    const body = document.getElementById('modal-body');
+    body.innerHTML = `<div style="text-align:center; padding:3rem;">
+      <div style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.5rem;">Claudeが企業ノートを生成しています...<br><span style="font-size:0.75rem; opacity:0.6;">（10〜20秒かかります）</span></div>
+      <div style="width:36px; height:36px; border:2px solid rgba(10,26,62,0.1); border-top-color:var(--navy);
+        border-radius:50%; animation:genSpin 0.8s linear infinite; margin:0 auto;"></div>
+    </div>`;
+    document.getElementById('company-modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    try {
+      const res = await fetch(GAS_PROXY_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'generate', companyName }),
+      });
+      const data = await res.json();
+      if (data.status !== 'ok') throw new Error(data.message || '生成に失敗しました');
+      const note = data.note;
+
+      // メモリに追加（検索でも出るように）
+      companyNotes.push([companyName, note.industry||'', note.business||'', note.strength||'', note.motive||'', note.process||'', note.url||'']);
+
+      // モーダルに表示
+      document.getElementById('modal-industry').textContent = note.industry || '';
+      const fields = [
+        { label: '事業内容メモ', value: note.business },
+        { label: '強み・弱み', value: note.strength },
+        { label: '志望動機メモ', value: note.motive },
+        { label: '選考フロー', value: note.process },
+        { label: '参考URL', value: note.url, isUrl: true },
+      ];
+      body.innerHTML = fields.map(f => {
+        if (!f.value) return '';
+        const val = f.isUrl
+          ? f.value.split(/[|;]/).map(u => u.trim()).filter(Boolean)
+              .map(u => `<a href="${u}" target="_blank" class="modal-url" style="display:block;margin-bottom:0.3rem;">${u}</a>`).join('')
+          : `<div class="modal-field-content">${f.value}</div>`;
+        return `<div class="modal-field"><div class="modal-field-label">${f.label}</div>${val}</div>`;
+      }).filter(Boolean).join('') +
+      `<div style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid rgba(10,26,62,0.1); text-align:center;">
+        <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:0.8rem;">※ このノートはまだスプシに保存されていません</div>
+        <button onclick="saveNoteToSheet('${companyName.replace(/'/g,"\'")}', ${JSON.stringify(note).replace(/\/g,'\\').replace(/'/g,"\'")})"
+          style="padding:0.5rem 1.4rem; background:rgba(10,26,62,0.07); border:1px solid rgba(10,26,62,0.2);
+          color:var(--navy); font-family:'Noto Sans JP',sans-serif; font-size:0.78rem;
+          font-weight:600; cursor:pointer;">
+          スプシに保存する
+        </button>
+      </div>`;
+
+    } catch(err) {
+      body.innerHTML = `<div class="modal-no-data" style="color:var(--crimson);">⚠ 生成エラー: ${err.message}</div>`;
+    }
+  }
+
+  async function saveNoteToSheet(companyName, note) {
+    try {
+      const btn = event.target;
+      btn.textContent = '保存中...'; btn.disabled = true;
+      const res = await fetch(GAS_PROXY_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'save', companyName, note }),
+      });
+      const result = await res.json();
+      if (result.status === 'ok') {
+        btn.textContent = '✓ 保存しました';
+        btn.style.background = 'rgba(0,112,60,0.08)';
+        btn.style.color = '#00703c';
+        btn.style.borderColor = '#00703c';
+      } else throw new Error(result.message);
+    } catch(err) {
+      alert('保存エラー: ' + err.message);
+    }
   }
 
   function closeModal(e) {
