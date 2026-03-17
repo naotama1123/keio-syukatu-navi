@@ -336,9 +336,8 @@
 
 <script>
 
-  // ===== 新歓イベント スプシ連携 =====
-  const ORIENTATION_EVENT_CSV = 'https://docs.google.com/spreadsheets/d/1ujQ0RcbAqmIormMO-8I1THUSNvtuu0CjHll6sdc_Wrc/export?format=csv&gid=0';
-  // 列構成: A:日付　B:タイトル　C:説明文
+  // ===== 新歓イベント スプシ連携（GASプロキシ経由）=====
+  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbx6NGQnAzUJcivKuDGTLf6cs0WhaO4eyILQHV8UfHmGkgzybHdxv41LLNoV0wQ56-EYIQ/exec';
 
   async function loadOrientationEvents() {
     const el = document.getElementById('orientation-events');
@@ -349,13 +348,16 @@
     ];
 
     let rows = sample;
-    if (ORIENTATION_EVENT_CSV) {
+    if (GAS_PROXY_URL) {
       try {
-        const res = await fetch(ORIENTATION_EVENT_CSV, { redirect: 'follow' });
-        const text = await res.text();
-        if (!text.includes('<!DOCTYPE')) {
-          rows = text.trim().split('\n').map(l => l.split(',').map(c => c.trim().replace(/^"|"$/g,''))).slice(1).filter(r => r[0]);
-        }
+        const res = await fetch(GAS_PROXY_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'read', sheetKey: 'orientation' }),
+          redirect: 'follow',
+        });
+        const data = await res.json();
+        if (data.status === 'ok' && data.rows.length) rows = data.rows;
+        else rows = [];
       } catch(e) { rows = []; }
     }
 

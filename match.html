@@ -178,9 +178,58 @@
     .card-stack { height:420px; }
     .card-name { font-size:1.35rem; }
   }
+
+  /* ===== PASSWORD SCREEN ===== */
+  #pw-screen {
+    position: fixed; inset: 0; z-index: 999;
+    display: flex; align-items: center; justify-content: center;
+    background: #0a1a3e; padding: 2rem;
+  }
+  .pw-box {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(201,168,76,0.2);
+    padding: 3rem 2.5rem; max-width: 400px; width: 100%; text-align: center;
+    position: relative;
+  }
+  .pw-box::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #c0001a, #c9a84c);
+  }
+  .pw-icon { font-size: 2rem; margin-bottom: 1.2rem; }
+  .pw-title { font-family: 'Noto Serif JP', serif; font-size: 1.2rem; color: white; margin-bottom: 0.5rem; }
+  .pw-sub { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-bottom: 2rem; line-height: 1.8; }
+  .pw-input {
+    width: 100%; padding: 0.85rem 1rem; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15); color: white;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 1rem;
+    text-align: center; letter-spacing: 0.2em; outline: none;
+    transition: border-color 0.2s; margin-bottom: 1rem;
+  }
+  .pw-input:focus { border-color: #c9a84c; }
+  .pw-btn {
+    width: 100%; padding: 0.9rem; background: #0a1a3e;
+    border: 1px solid rgba(201,168,76,0.4); color: #e8c96c;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 0.88rem;
+    font-weight: 500; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s;
+  }
+  .pw-btn:hover { background: rgba(201,168,76,0.1); }
+  .pw-error { font-size: 0.78rem; color: #c0001a; margin-top: 0.8rem; min-height: 1.2em; }
+
 </style>
 </head>
 <body>
+
+
+<!-- PASSWORD SCREEN -->
+<div id="pw-screen">
+  <div class="pw-box">
+    <div class="pw-icon">🔒</div>
+    <div class="pw-title">企業マッチング</div>
+    <p class="pw-sub">このページは慶應就活ナビのメンバー限定です。<br>パスワードを入力してください。</p>
+    <input type="password" class="pw-input" id="pw-input" placeholder="••••••••" maxlength="30">
+    <button class="pw-btn" onclick="checkPw()">入室する →</button>
+    <p class="pw-error" id="pw-error"></p>
+  </div>
+</div>
 
 <nav>
   <a href="members.html" class="nav-back">← 会員ページ</a>
@@ -245,8 +294,7 @@
 </div>
 
 <script>
-const COMPANY_CSV = 'https://docs.google.com/spreadsheets/d/1axjcyNPqBiD4SiNhxDx3NaVALelMEkMt2x2ng0Sk7Ww/export?format=csv&gid=0';
-const SELECTION_CSV = 'https://docs.google.com/spreadsheets/d/1Rm6H6d2BcduDosoagcJjF3I78xOeuimNb3p80R6F3qE/export?format=csv&gid=0';
+const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbx6NGQnAzUJcivKuDGTLf6cs0WhaO4eyILQHV8UfHmGkgzybHdxv41LLNoV0wQ56-EYIQ/exec';
 const LIKED_KEY = 'keio_navi_liked_v2';
 
 let companies = [], selectionRows = [], idx = 0, sessionSeen = new Set();
@@ -265,26 +313,21 @@ function hdrColor(ind) {
   return '#122050';
 }
 
-async function fetchCSV(url) {
-  const res = await fetch(url, {redirect:'follow'});
-  const text = await res.text();
-  if (text.includes('<!DOCTYPE')) throw new Error();
-  return text.trim().split('\n').map(line => {
-    const r=[]; let cur='',inQ=false;
-    for (let i=0;i<line.length;i++) {
-      const ch=line[i];
-      if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
-      else if(ch===','&&!inQ){r.push(cur.trim());cur='';}
-      else{cur+=ch;}
-    }
-    r.push(cur.trim()); return r;
-  }).slice(1);
+async function fetchViaGAS(sheetKey) {
+  const res = await fetch(GAS_PROXY_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'read', sheetKey }),
+    redirect: 'follow',
+  });
+  const data = await res.json();
+  if (data.status !== 'ok') throw new Error(data.message || '読み込みに失敗しました');
+  return data.rows;
 }
 
 async function init() {
   try {
-    selectionRows = await fetchCSV(SELECTION_CSV).catch(()=>[]);
-    const rows = await fetchCSV(COMPANY_CSV);
+    selectionRows = await fetchViaGAS('selection').catch(()=>[]);
+    const rows = await fetchViaGAS('company');
     companies = rows.filter(r=>r[0]&&r[0].trim()).map(r=>({
       name:r[0]||'',industry:r[1]||'',business:r[2]||'',
       strength:r[3]||'',motive:r[4]||'',process:r[5]||'',url:r[6]||'',
@@ -648,6 +691,29 @@ function sample(){return[
   {name:'マッキンゼー',industry:'コンサルティング',business:'世界最大級の戦略コンサルファーム。経営戦略・組織・DXなど企業の重要課題を解決。',strength:'【強み】ブランド・OBネットワーク・高報酬\n【弱み】激務・プロジェクト依存',motive:'スタート地点として最高峰の環境',process:'ES → ケース面接3〜4回 → オファー',url:'https://www.mckinsey.com/jp/careers'},
   {name:'電通',industry:'広告',business:'国内最大手の総合広告会社。マス広告からデジタル・PRまで幅広くカバー。',strength:'【強み】クライアント基盤・クリエイティブ力\n【弱み】デジタルシフトの課題',motive:'日本の広告業界のトップを経験できる',process:'ES → 筆記 → 面接複数回 → 最終',url:'https://recruit.dentsu.co.jp/'},
 ];}
+
+
+const MATCH_PASSWORD = 'keio2025'; // ← members.htmlと同じパスワード
+
+function checkPw() {
+  const input = document.getElementById('pw-input').value;
+  if (input === MATCH_PASSWORD) {
+    sessionStorage.setItem('match_auth', '1');
+    document.getElementById('pw-screen').style.display = 'none';
+  } else {
+    document.getElementById('pw-error').textContent = 'パスワードが違います。';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const pwInput = document.getElementById('pw-input');
+  if (pwInput) pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkPw(); });
+  if (sessionStorage.getItem('match_auth') === '1') {
+    document.getElementById('pw-screen').style.display = 'none';
+  }
+});
 
 init();
 </script>

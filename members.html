@@ -172,6 +172,25 @@
   .deadline-chip-days { font-size: 0.65rem; color: var(--crimson); font-weight: 700; }
   .deadline-chip-days.today { color: #ff6b6b; }
 
+  /* ===== PAGINATION ===== */
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.8rem 1rem; background: white;
+    border-top: 1px solid rgba(10,26,62,0.08);
+    font-size: 0.78rem;
+  }
+  .pagination-info { color: var(--text-muted); }
+  .pagination-btns { display: flex; gap: 0.4rem; }
+  .pagination-btn {
+    padding: 0.3rem 0.8rem; border: 1px solid rgba(10,26,62,0.15);
+    background: white; color: var(--navy); cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif; font-size: 0.75rem;
+    font-weight: 600; transition: all 0.15s;
+  }
+  .pagination-btn:hover:not(:disabled) { background: var(--navy); color: white; border-color: var(--navy); }
+  .pagination-btn:disabled { opacity: 0.3; cursor: default; }
+  .pagination-btn.active { background: var(--navy); color: white; border-color: var(--navy); }
+
   /* ===== SELECTION INFO TABLE ===== */
   .selection-list { display: flex; flex-direction: column; gap: 1px; background: rgba(10,26,62,0.08); }
   .selection-row {
@@ -750,15 +769,16 @@
   const PASSWORD = 'keio2025'; // ← ここを変更してください
 
   // ===== スプレッドシートURL（各シートをCSVで公開） =====
-  const SELECTION_CSV = 'https://docs.google.com/spreadsheets/d/1Rm6H6d2BcduDosoagcJjF3I78xOeuimNb3p80R6F3qE/export?format=csv&gid=0'; // 列: 企業名, 選考種別, 締切日, タグ(ES/面接/GD), 共有リンク
-  const PRIORITY_CSV  = 'https://docs.google.com/spreadsheets/d/1Q8Ixh34Ffzy4imnugj4Nyp9mN65A-PUw_PXOj2ATA58/export?format=csv&gid=0'; // 列: 日付, タイトル, 場所・備考
-  const FILES_CSV     = 'https://docs.google.com/spreadsheets/d/1N-9COcRmmf1TeNU1EHqyGqFzHzn02ngNlPXAsBbtnsg/export?format=csv&gid=0'; // 列: ファイル名, 説明, リンクURL, 更新日
-  const BOOKS_CSV     = 'https://docs.google.com/spreadsheets/d/1hLFipZMnS03sc5aWb_pmCKXBN7utQaAQRXImg4uQhrs/export?format=csv&gid=0';
-  const EVENT_CSV     = 'https://docs.google.com/spreadsheets/d/1lr-FNeqRi5l41BafVJRc9Upkwn0VpLNmBvlM7moIgw8/export?format=csv&gid=0';
-  const COMPANY_CSV   = 'https://docs.google.com/spreadsheets/d/1axjcyNPqBiD4SiNhxDx3NaVALelMEkMt2x2ng0Sk7Ww/export?format=csv&gid=0';
+  // スプシキー（GASプロキシ経由で読み込む）
+  const SELECTION_KEY = 'selection';
+  const PRIORITY_KEY  = 'priority';
+  const FILES_KEY     = 'files';
+  const BOOKS_KEY     = 'books';
+  const EVENT_KEY     = 'event';
+  const COMPANY_KEY   = 'company';
   const NOTICE_CSV     = ''; // ← お知らせスプシのCSV URLを貼る（列: 日付・タイトル・内容・タグ）
   const SELECTION_FORM = ''; // ← 選考情報投稿フォームのURLを貼る
-  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbw-yG_kOdrn6ulo9mFWKFcVeLDwDvPNeCQvPasAbHxvVCEPsX3pycp9PikavsP08gITmw/exec';
+  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbx6NGQnAzUJcivKuDGTLf6cs0WhaO4eyILQHV8UfHmGkgzybHdxv41LLNoV0wQ56-EYIQ/exec';
   const LENDING_FORM  = 'https://docs.google.com/forms/d/e/1FAIpQLScmV_ubANH5RNIHD_wEH3yakHbs5YqdegrPysSfpFo4veAg4Q/viewform'; // 列: タイトル, 著者, 状態(貸出可/貸出中), 現在の保有者
 
   function checkPassword() {
@@ -794,26 +814,29 @@
   // 自動ログイン（セッション維持）
   if (sessionStorage.getItem('members_auth') === '1') showMembers();
 
-  async function fetchCSV(url) {
-    const res = await fetch(url, { redirect: 'follow' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    if (text.includes('<!DOCTYPE') || text.includes('<html')) throw new Error('スプシの共有設定を確認してください');
-    return text.trim().split('\n').map(line => {
-      const result = [];
-      let cur = '', inQ = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') {
-          if (inQ && line[i+1] === '"') { cur += '"'; i++; }
-          else inQ = !inQ;
-        } else if (ch === ',' && !inQ) {
-          result.push(cur.trim()); cur = '';
-        } else { cur += ch; }
-      }
-      result.push(cur.trim());
-      return result;
-    }).slice(1);
+  async function fetchCSV(sheetName) {
+    if (!GAS_PROXY_URL) throw new Error('GAS_PROXY_URLが設定されていません');
+    const res = await fetch(GAS_PROXY_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'getSheet', sheet: sheetName }),
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message || '読み込みに失敗しました');
+    return data.rows;
+  }
+
+
+  // GASプロキシ経由でスプシを読み込む
+  async function fetchViaGAS(sheetKey) {
+    if (!GAS_PROXY_URL) throw new Error('GAS_PROXY_URLが設定されていません');
+    const res = await fetch(GAS_PROXY_URL, {
+      method: 'POST',
+        body: JSON.stringify({ action: 'read', sheetKey }),
+      redirect: 'follow',
+    });
+    const data = await res.json();
+    if (data.status !== 'ok') throw new Error(data.message || '読み込みに失敗しました');
+    return data.rows;
   }
 
   // ① 選考情報
@@ -821,6 +844,8 @@
   let selectionSortAsc = true;
   let selectionIndustry = 'all';
   let selectionFeature = 'all';
+  let selectionPage = 0;
+  const SELECTION_PAGE_SIZE = 10;
 
   async function loadSelection() {
     const el = document.getElementById('selection-list');
@@ -833,15 +858,15 @@
       ['△△スタートアップ', '2025/06/25', 'インターン', '', 'サービス・インフラ', 'ベンチャー'],
     ];
     try {
-      selectionRows = SELECTION_CSV ? (await fetchCSV(SELECTION_CSV)) : sample;
+      selectionRows = SELECTION_KEY ? (await fetchViaGAS(SELECTION_KEY)) : sample;
     } catch(err) {
       el.innerHTML = `<div class="m-empty" style="color:var(--crimson);">⚠ 読み込みエラー: ${err.message}</div>`;
-      console.error('SELECTION_CSV:', err); return;
+      console.error('SELECTION_KEY:', err); return;
     }
     if (!selectionRows.length) { el.innerHTML = '<div class="m-empty">情報はまだありません。</div>'; return; }
     renderSelection();
     checkDeadlineAlert();
-    if (!SELECTION_CSV) note.textContent = '※ サンプルデータです。スプシの6列目に業界名、7列目に「大手」または「ベンチャー」を入力してください。';
+    if (!SELECTION_KEY) note.textContent = '※ サンプルデータです。スプシの6列目に業界名、7列目に「大手」または「ベンチャー」を入力してください。';
   }
 
 
@@ -1000,21 +1025,21 @@
   }
 
   function setFeature(val) {
-    selectionFeature = val;
+    selectionFeature = val; selectionPage = 0;
     document.querySelectorAll('[data-feature]').forEach(b => b.classList.remove('active'));
     document.querySelector(`[data-feature="${val}"]`).classList.add('active');
     renderSelection();
   }
 
   function setIndustry(val) {
-    selectionIndustry = val;
+    selectionIndustry = val; selectionPage = 0;
     document.querySelectorAll('[data-industry]').forEach(b => b.classList.remove('active'));
     document.querySelector(`[data-industry="${val}"]`).classList.add('active');
     renderSelection();
   }
 
   function toggleSort() {
-    selectionSortAsc = !selectionSortAsc;
+    selectionSortAsc = !selectionSortAsc; selectionPage = 0;
     const btn = document.getElementById('sort-btn');
     btn.textContent = selectionSortAsc ? '↑ 締切が近い順' : '↓ 締切が遅い順';
     renderSelection();
@@ -1033,14 +1058,14 @@
       ['2025/06/20', '18:00〜20:00', '□□テック エンジニア交流会', 'オンライン', '□□テック', 'https://example.com', '鈴木', ''],
     ];
     try {
-      eventRows = EVENT_CSV ? (await fetchCSV(EVENT_CSV)) : sample;
+      eventRows = EVENT_KEY ? (await fetchViaGAS(EVENT_KEY)) : sample;
     } catch(err) {
       el.innerHTML = `<div class="m-empty" style="color:var(--crimson);">⚠ 読み込みエラー: ${err.message}</div>`;
-      console.error('EVENT_CSV:', err); return;
+      console.error('EVENT_KEY:', err); return;
     }
     if (!eventRows.length) { el.innerHTML = '<div class="m-empty">イベント情報はまだありません。</div>'; return; }
     renderEvents();
-    if (!EVENT_CSV) note.textContent = '※ サンプルデータです。スプシURLを設定してください。';
+    if (!EVENT_KEY) note.textContent = '※ サンプルデータです。スプシURLを設定してください。';
   }
 
   function renderEvents() {
@@ -1119,10 +1144,10 @@
     ];
     let rows;
     try {
-      rows = PRIORITY_CSV ? (await fetchCSV(PRIORITY_CSV)) : sample;
+      rows = PRIORITY_KEY ? (await fetchViaGAS(PRIORITY_KEY)) : sample;
     } catch(err) {
       el.innerHTML = `<div class="m-empty" style="color:var(--crimson);">⚠ 読み込みエラー: ${err.message}</div>`;
-      console.error('PRIORITY_CSV:', err); return;
+      console.error('PRIORITY_KEY:', err); return;
     }
     if (!rows.length) { el.innerHTML = '<div class="m-empty">現在の先行案内はありません。</div>'; return; }
     const WEEKDAYS = ['日','月','火','水','木','金','土'];
@@ -1139,7 +1164,7 @@
         <div><span class="priority-badge">先行案内</span></div>
       </div>`;
     }).join('');
-    if (!PRIORITY_CSV) note.textContent = '※ サンプルデータです。スプシURLを設定してください。';
+
   }
 
   // ③ 限定資料
@@ -1153,10 +1178,10 @@
     ];
     let rows;
     try {
-      rows = FILES_CSV ? (await fetchCSV(FILES_CSV)) : sample;
+      rows = FILES_KEY ? (await fetchViaGAS(FILES_KEY)) : sample;
     } catch(err) {
       el.innerHTML = `<div class="m-empty" style="color:var(--crimson);">⚠ 読み込みエラー: ${err.message}</div>`;
-      console.error('FILES_CSV:', err); return;
+      console.error('FILES_KEY:', err); return;
     }
     if (!rows.length) { el.innerHTML = '<div class="m-empty" style="grid-column:1/-1;">資料はまだありません。</div>'; return; }
     el.innerHTML = rows.map(r => {
@@ -1169,7 +1194,7 @@
         ${hasLink ? '<div class="file-link">開く →</div>' : '<div class="file-link" style="color:var(--text-muted)">準備中</div>'}
       </${hasLink ? 'a' : 'div'}>`;
     }).join('');
-    if (!FILES_CSV) note.textContent = '※ サンプルデータです。スプシURLを設定してください。';
+
   }
 
   // ④ 貸出状況
@@ -1184,10 +1209,10 @@
     ];
     let rows;
     try {
-      rows = BOOKS_CSV ? (await fetchCSV(BOOKS_CSV)) : sample;
+      rows = BOOKS_KEY ? (await fetchViaGAS(BOOKS_KEY)) : sample;
     } catch(err) {
       el.innerHTML = `<div class="m-empty" style="color:var(--crimson);">⚠ 読み込みエラー: ${err.message}</div>`;
-      console.error('BOOKS_CSV:', err); return;
+      console.error('BOOKS_KEY:', err); return;
     }
     if (!rows.length) { el.innerHTML = '<div class="m-empty" style="grid-column:1/-1;">本の情報はまだありません。</div>'; return; }
     el.innerHTML = rows.map(r => {
@@ -1206,7 +1231,7 @@
         </div>
       </div>`;
     }).join('');
-    if (!BOOKS_CSV) note.textContent = '※ サンプルデータです。スプシURLを設定してください。';
+
   }
 
 
@@ -1214,9 +1239,9 @@
   let companyNotes = [];
 
   async function loadCompanyNotes() {
-    if (!COMPANY_CSV) return;
+    if (!GAS_PROXY_URL) return;
     try {
-      companyNotes = await fetchCSV(COMPANY_CSV);
+      companyNotes = await fetchViaGAS(COMPANY_KEY);
       renderRandomNotes();
     } catch(e) { console.warn('企業分析ノート読み込み失敗', e); }
   }
