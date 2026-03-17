@@ -1390,6 +1390,9 @@
         { label: '選考フロー', value: note.process },
         { label: '参考URL', value: note.url, isUrl: true },
       ];
+      // 生成結果を一時保存
+      window._lastGeneratedNote = { companyName, note };
+
       body.innerHTML = fields.map(f => {
         if (!f.value) return '';
         const val = f.isUrl
@@ -1400,7 +1403,7 @@
       }).filter(Boolean).join('') +
       `<div style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid rgba(10,26,62,0.1); text-align:center;">
         <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:0.8rem;">※ このノートはまだスプシに保存されていません</div>
-        <button onclick="saveNoteToSheet('${companyName.replace(/'/g,"\'")}', ${JSON.stringify(note).replace(/\/g,'\\').replace(/'/g,"\'")})"
+        <button onclick="saveLastNote(this)"
           style="padding:0.5rem 1.4rem; background:rgba(10,26,62,0.07); border:1px solid rgba(10,26,62,0.2);
           color:var(--navy); font-family:'Noto Sans JP',sans-serif; font-size:0.78rem;
           font-weight:600; cursor:pointer;">
@@ -1413,9 +1416,15 @@
     }
   }
 
-  async function saveNoteToSheet(companyName, note) {
+  async function saveLastNote(btn) {
+    const data = window._lastGeneratedNote;
+    if (!data) return;
+    await saveNoteToSheet(data.companyName, data.note, btn);
+  }
+
+  async function saveNoteToSheet(companyName, note, btn) {
     try {
-      const btn = event.target;
+      btn = btn || event.target;
       btn.textContent = '保存中...'; btn.disabled = true;
       const res = await fetch(GAS_PROXY_URL, {
         method: 'POST',
