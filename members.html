@@ -758,7 +758,7 @@
   const COMPANY_CSV   = 'https://docs.google.com/spreadsheets/d/1axjcyNPqBiD4SiNhxDx3NaVALelMEkMt2x2ng0Sk7Ww/export?format=csv&gid=0';
   const NOTICE_CSV     = ''; // ← お知らせスプシのCSV URLを貼る（列: 日付・タイトル・内容・タグ）
   const SELECTION_FORM = ''; // ← 選考情報投稿フォームのURLを貼る
-  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxh9A_kyc6dpslbsEGRc-Ig8OMqU_ikg8Wx379gMnOzcYB9T7V371Npm4BvxnE2WoVkmw/exec';
+  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxarSu8EDdQZ4diQIUm-zCR75hoEi4pfYBV9bPN_5CtuA5hmwmB6N1R_RazvCesB8u6Jg/exec';
   const LENDING_FORM  = 'https://docs.google.com/forms/d/e/1FAIpQLScmV_ubANH5RNIHD_wEH3yakHbs5YqdegrPysSfpFo4veAg4Q/viewform'; // 列: タイトル, 著者, 状態(貸出可/貸出中), 現在の保有者
 
   function checkPassword() {
@@ -1362,7 +1362,7 @@
     document.getElementById('modal-industry').textContent = '生成中...';
     const body = document.getElementById('modal-body');
     body.innerHTML = `<div style="text-align:center; padding:3rem;">
-      <div style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.5rem;">Claudeが企業ノートを生成しています...<br><span style="font-size:0.75rem; opacity:0.6;">（10〜20秒かかります）</span></div>
+      <div style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1.5rem;">Claudeが企業ノートを生成しています...<br><span style="font-size:0.75rem; opacity:0.6;">（30〜60秒かかります。そのままお待ちください）</span></div>
       <div style="width:36px; height:36px; border:2px solid rgba(10,26,62,0.1); border-top-color:var(--navy);
         border-radius:50%; animation:genSpin 0.8s linear infinite; margin:0 auto;"></div>
     </div>`;
@@ -1370,11 +1370,19 @@
     document.body.style.overflow = 'hidden';
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 90000); // 90秒タイムアウト
       const res = await fetch(GAS_PROXY_URL, {
         method: 'POST',
+        redirect: 'follow',
         body: JSON.stringify({ action: 'generate', companyName }),
+        signal: controller.signal,
       });
-      const data = await res.json();
+      clearTimeout(timeout);
+      const text = await res.text();
+      let data;
+      try { data = JSON.parse(text); }
+      catch(e) { throw new Error('GASからの応答が不正です: ' + text.slice(0, 100)); }
       if (data.status !== 'ok') throw new Error(data.message || '生成に失敗しました');
       const note = data.note;
 
@@ -1428,9 +1436,13 @@
       btn.textContent = '保存中...'; btn.disabled = true;
       const res = await fetch(GAS_PROXY_URL, {
         method: 'POST',
+        redirect: 'follow',
         body: JSON.stringify({ action: 'save', companyName, note }),
       });
-      const result = await res.json();
+      const resultText = await res.text();
+      let result;
+      try { result = JSON.parse(resultText); }
+      catch(e) { throw new Error('保存応答が不正です'); }
       if (result.status === 'ok') {
         btn.textContent = '✓ 保存しました';
         btn.style.background = 'rgba(0,112,60,0.08)';
