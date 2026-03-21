@@ -32,6 +32,13 @@
     padding: 0.25rem 0.8rem; cursor: pointer; transition: all 0.2s;
   }
   .like-pill:hover { background: rgba(201,168,76,0.2); }
+  .nav-utility {
+    background: none; border: 1px solid rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.56); font-size: 0.72rem;
+    padding: 0.3rem 0.75rem; font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .nav-utility:hover { border-color: var(--crimson); color: var(--crimson); }
 
   .main {
     flex: 1; display: flex; flex-direction: column;
@@ -206,13 +213,23 @@
   }
   .pw-input:focus { border-color: #c9a84c; }
   .pw-btn {
+    display: block;
     width: 100%; padding: 0.9rem; background: #0a1a3e;
     border: 1px solid rgba(201,168,76,0.4); color: #e8c96c;
     font-family: 'Noto Sans JP', sans-serif; font-size: 0.88rem;
     font-weight: 500; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s;
+    text-decoration: none;
   }
   .pw-btn:hover { background: rgba(201,168,76,0.1); }
   .pw-error { font-size: 0.78rem; color: #c0001a; margin-top: 0.8rem; min-height: 1.2em; }
+  .gate-actions { display: grid; gap: 0.75rem; }
+  .pw-link-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; color: rgba(255,255,255,0.72);
+    text-decoration: none; padding: 0.85rem 1rem;
+    border: 1px solid rgba(255,255,255,0.14); transition: all 0.2s;
+  }
+  .pw-link-btn:hover { border-color: #c9a84c; color: #e8c96c; }
 
 </style>
 </head>
@@ -222,19 +239,26 @@
 <!-- PASSWORD SCREEN -->
 <div id="pw-screen">
   <div class="pw-box">
-    <div class="pw-icon">🔒</div>
+    <div class="pw-icon">👤</div>
     <div class="pw-title">企業マッチング</div>
-    <p class="pw-sub">このページは慶應就活ナビのメンバー限定です。<br>パスワードを入力してください。</p>
-    <input type="password" class="pw-input" id="pw-input" placeholder="••••••••" maxlength="30">
-    <button class="pw-btn" onclick="checkPw()">入室する →</button>
-    <p class="pw-error" id="pw-error"></p>
+    <p class="pw-sub" id="match-gate-copy">このページは慶應就活ナビのメンバー限定です。<br>個人アカウントでログインすると使えます。</p>
+    <div class="gate-actions">
+      <a class="pw-btn" id="match-login-btn" href="account.html?mode=login&amp;returnTo=match.html">ログインして入る →</a>
+      <a class="pw-link-btn" href="account.html?mode=signup&amp;returnTo=match.html">新しくアカウントを作る</a>
+    </div>
   </div>
 </div>
 
 <nav>
-  <a href="members.html" class="nav-back">← 会員ページ</a>
+  <div style="display:flex; align-items:center; gap:0.55rem;">
+    <a href="members.html" class="nav-back">← 会員ページ</a>
+    <a href="account.html" class="nav-back" id="match-account-link">マイページ</a>
+  </div>
   <div class="nav-title">企業マッチング</div>
-  <div class="like-pill" onclick="openModal()">♥ <span id="like-count">0</span></div>
+  <div style="display:flex; align-items:center; gap:0.55rem;">
+    <button class="nav-utility" id="match-logout-btn" onclick="logoutMatch()" style="display:none;">ログアウト</button>
+    <div class="like-pill" onclick="openModal()">♥ <span id="like-count">0</span></div>
+  </div>
 </nav>
 
 <!-- DEADLINE ALERT -->
@@ -293,14 +317,15 @@
   </div>
 </div>
 
+<script src="auth.js"></script>
 <script>
-const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbybiRMbrMnLMEabmGxVLMZ_7eGSOFPPOQ6NsbbVADlRiF4409qnJyX8K4tLqgiSNa8Qtg/exec';
-const LIKED_KEY = 'keio_navi_liked_v2';
+const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxhnBXykIHYY3044O1TIQc5cATOMh3OY_hcEqzXheQsy1ccYCeSkYEkUTzoti5Hz7xjYw/exec';
 
 let companies = [], selectionRows = [], idx = 0, sessionSeen = new Set();
-let liked = JSON.parse(localStorage.getItem(LIKED_KEY) || '[]');
+let liked = [];
 let dragging = false, sx = 0, sy = 0, cx = 0;
 let topCard = null;
+let hasInitialized = false;
 
 const IND_COLORS = {
   '総合商社':'#112b5c','商社':'#112b5c','コンサル':'#221048','コンサルティング':'#221048',
@@ -314,16 +339,14 @@ function hdrColor(ind) {
 }
 
 async function fetchViaGAS(sheetKey) {
-  const url = `${GAS_PROXY_URL}?action=read&sheetKey=${encodeURIComponent(sheetKey)}`;
-  const res = await fetch(url, {
-    method: 'GET',
-    cache: 'no-store',
+  const res = await fetch(GAS_PROXY_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'read', sheetKey }),
     redirect: 'follow',
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   if (data.status !== 'ok') throw new Error(data.message || '読み込みに失敗しました');
-  return data.rows || [];
+  return data.rows;
 }
 
 async function init() {
@@ -461,7 +484,7 @@ function swipe(dir) {
   topCard.style.transform=`translateX(${dir==='right'?'130%':'-130%'}) rotate(${dir==='right'?'20deg':'-20deg'})`;
   topCard.style.opacity='0'; topCard.dataset.layer='0';
   if(dir==='right') {
-    if(!liked.find(x=>x.name===c.name)){liked.push(c);localStorage.setItem(LIKED_KEY,JSON.stringify(liked));}
+    liked = KeioNaviAuth.addLikedCompany(c);
     pop('♥'); updateCount();
   } else { pop('✕'); }
   // 次のカードをスタックに追加（無限ループ）
@@ -678,7 +701,8 @@ function closeModal(){ document.getElementById('overlay').classList.remove('open
 function overlayClick(e){ if(e.target===document.getElementById('overlay')) closeModal(); }
 function clearLiked(){
   if(!confirm('リストをリセットしますか？')) return;
-  liked=[]; localStorage.setItem(LIKED_KEY,JSON.stringify(liked));
+  liked = [];
+  KeioNaviAuth.clearLikedCompanies();
   updateCount(); closeModal();
 }
 
@@ -693,31 +717,47 @@ function sample(){return[
   {name:'マッキンゼー',industry:'コンサルティング',business:'世界最大級の戦略コンサルファーム。経営戦略・組織・DXなど企業の重要課題を解決。',strength:'【強み】ブランド・OBネットワーク・高報酬\n【弱み】激務・プロジェクト依存',motive:'スタート地点として最高峰の環境',process:'ES → ケース面接3〜4回 → オファー',url:'https://www.mckinsey.com/jp/careers'},
   {name:'電通',industry:'広告',business:'国内最大手の総合広告会社。マス広告からデジタル・PRまで幅広くカバー。',strength:'【強み】クライアント基盤・クリエイティブ力\n【弱み】デジタルシフトの課題',motive:'日本の広告業界のトップを経験できる',process:'ES → 筆記 → 面接複数回 → 最終',url:'https://recruit.dentsu.co.jp/'},
 ];}
+function applyMatchAuthUi(user) {
+  document.getElementById('pw-screen').style.display = 'none';
+  document.getElementById('match-logout-btn').style.display = 'inline-flex';
+  document.getElementById('match-account-link').textContent = user.username + ' さん';
+}
 
-
-const MATCH_PASSWORD = 'keio2025'; // ← members.htmlと同じパスワード
-
-function checkPw() {
-  const input = document.getElementById('pw-input').value;
-  if (input === MATCH_PASSWORD) {
-    sessionStorage.setItem('match_auth', '1');
-    document.getElementById('pw-screen').style.display = 'none';
-  } else {
-    document.getElementById('pw-error').textContent = 'パスワードが違います。';
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-input').focus();
+function updateMatchGate() {
+  const copy = document.getElementById('match-gate-copy');
+  const loginBtn = document.getElementById('match-login-btn');
+  if (copy) {
+    copy.innerHTML = 'このページは慶應就活ナビのメンバー限定です。<br>個人アカウントでログインすると使えます。';
+  }
+  if (loginBtn) {
+    loginBtn.href = 'account.html?mode=login&returnTo=match.html';
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const pwInput = document.getElementById('pw-input');
-  if (pwInput) pwInput.addEventListener('keydown', e => { if (e.key === 'Enter') checkPw(); });
-  if (sessionStorage.getItem('match_auth') === '1') {
-    document.getElementById('pw-screen').style.display = 'none';
-  }
-});
+function logoutMatch() {
+  KeioNaviAuth.logout();
+  location.reload();
+}
 
-init();
+function bootMatchPage() {
+  const user = KeioNaviAuth.getCurrentUser();
+  if (!user) {
+    updateMatchGate();
+    updateCount();
+    return;
+  }
+
+  liked = KeioNaviAuth.getLikedCompanies();
+  applyMatchAuthUi(user);
+  updateCount();
+
+  if (!hasInitialized) {
+    hasInitialized = true;
+    init();
+  }
+}
+
+bootMatchPage();
 </script>
 
 <!-- NOTE MODAL -->

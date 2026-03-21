@@ -68,13 +68,23 @@
   }
   .pw-input:focus { border-color: var(--gold); }
   .pw-btn {
+    display: block;
     width: 100%; padding: 0.9rem; background: var(--navy);
     border: 1px solid rgba(201,168,76,0.4); color: var(--gold-light);
     font-family: 'Noto Sans JP', sans-serif; font-size: 0.88rem;
     font-weight: 500; letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s;
+    text-decoration: none;
   }
   .pw-btn:hover { background: rgba(201,168,76,0.1); }
   .pw-error { font-size: 0.78rem; color: var(--crimson); margin-top: 0.8rem; min-height: 1.2em; }
+  .gate-actions { display: grid; gap: 0.75rem; }
+  .pw-link-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; color: rgba(255,255,255,0.72);
+    text-decoration: none; padding: 0.85rem 1rem;
+    border: 1px solid rgba(255,255,255,0.14); transition: all 0.2s;
+  }
+  .pw-link-btn:hover { border-color: var(--gold); color: var(--gold-light); }
 
   /* ===== MEMBERS CONTENT ===== */
   #members-content { display: none; padding-top: 68px; }
@@ -512,8 +522,9 @@
 <!-- NAV -->
 <nav>
   <a href="index.html" class="nav-logo">慶應就活ナビ</a>
-  <div style="display:flex; align-items:center; gap:1rem;">
+  <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap; justify-content:flex-end;">
     <span class="nav-member-badge" id="member-badge" style="display:none;">会員ページ</span>
+    <a href="account.html" class="nav-back" style="color:var(--gold); border:1px solid rgba(201,168,76,0.3); padding:0.3rem 0.8rem;">マイページ</a>
     <button class="logout-btn" id="logout-btn" style="display:none;" onclick="logout()">ログアウト</button>
     <a href="match.html" class="nav-back" style="margin-right:0.5rem; color:var(--gold); border:1px solid rgba(201,168,76,0.3); padding:0.3rem 0.8rem;">企業マッチング</a>
     <a href="index.html" class="nav-back">← トップに戻る</a>
@@ -537,12 +548,13 @@
 <!-- PASSWORD SCREEN -->
 <div id="password-screen">
   <div class="pw-box">
-    <div class="pw-icon">🔒</div>
+    <div class="pw-icon">👤</div>
     <h2 class="pw-title">会員専用ページ</h2>
-    <p class="pw-sub">このページは慶應就活ナビのメンバー限定です。<br>パスワードを入力してください。</p>
-    <input type="password" class="pw-input" id="pw-input" placeholder="••••••••" maxlength="30">
-    <button class="pw-btn" onclick="checkPassword()">入室する →</button>
-    <p class="pw-error" id="pw-error"></p>
+    <p class="pw-sub" id="auth-gate-copy">このページは慶應就活ナビのメンバー限定です。<br>個人アカウントでログインすると閲覧できます。</p>
+    <div class="gate-actions">
+      <a class="pw-btn" id="gate-login-btn" href="account.html?mode=login&amp;returnTo=members.html">ログインして入る →</a>
+      <a class="pw-link-btn" href="account.html?mode=signup&amp;returnTo=members.html">新しくアカウントを作る</a>
+    </div>
   </div>
 </div>
 
@@ -553,7 +565,7 @@
     <div class="members-hero-inner">
       <div class="members-badge">MEMBERS ONLY</div>
       <h1>会員ページ</h1>
-      <p>選考情報・限定イベント・資料・輪読会の貸出状況をまとめています。</p>
+      <p id="members-hero-copy">選考情報・限定イベント・資料・輪読会の貸出状況をまとめています。</p>
     </div>
   </div>
 
@@ -573,7 +585,7 @@
         </div>
         <div>
           <div class="m-section-label">TODAY'S PICK</div>
-          <div class="m-section-title">今日のおすすめ企業ノート</div>
+          <div class="m-section-title" id="random-notes-title">今日のおすすめ企業ノート</div>
         </div>
       </div>
       <div class="company-notes-grid" id="random-notes-grid"></div>
@@ -764,10 +776,8 @@
   </div>
 </div>
 
+<script src="auth.js"></script>
 <script>
-  // ===== パスワード設定 =====
-  const PASSWORD = 'keio2025'; // ← ここを変更してください
-
   // ===== スプレッドシートURL（各シートをCSVで公開） =====
   // スプシキー（GASプロキシ経由で読み込む）
   const SELECTION_KEY = 'selection';
@@ -778,41 +788,42 @@
   const COMPANY_KEY   = 'company';
   const NOTICE_CSV     = ''; // ← お知らせスプシのCSV URLを貼る（列: 日付・タイトル・内容・タグ）
   const SELECTION_FORM = ''; // ← 選考情報投稿フォームのURLを貼る
-  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbybiRMbrMnLMEabmGxVLMZ_7eGSOFPPOQ6NsbbVADlRiF4409qnJyX8K4tLqgiSNa8Qtg/exec';
+  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxhnBXykIHYY3044O1TIQc5cATOMh3OY_hcEqzXheQsy1ccYCeSkYEkUTzoti5Hz7xjYw/exec';
   const LENDING_FORM  = 'https://docs.google.com/forms/d/e/1FAIpQLScmV_ubANH5RNIHD_wEH3yakHbs5YqdegrPysSfpFo4veAg4Q/viewform'; // 列: タイトル, 著者, 状態(貸出可/貸出中), 現在の保有者
-
-  function checkPassword() {
-    const input = document.getElementById('pw-input').value;
-    const error = document.getElementById('pw-error');
-    if (input === PASSWORD) {
-      sessionStorage.setItem('members_auth', '1');
-      showMembers();
-    } else {
-      error.textContent = 'パスワードが違います。';
-      document.getElementById('pw-input').value = '';
-      document.getElementById('pw-input').focus();
-    }
-  }
-
-  document.getElementById('pw-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') checkPassword();
-  });
+  let hasLoadedMembersContent = false;
 
   function logout() {
-    sessionStorage.removeItem('members_auth');
+    KeioNaviAuth.logout();
     location.reload();
   }
 
-  function showMembers() {
+  function updateAuthGate() {
+    const copy = document.getElementById('auth-gate-copy');
+    const loginBtn = document.getElementById('gate-login-btn');
+    if (copy) {
+      copy.innerHTML = 'このページは慶應就活ナビのメンバー限定です。<br>個人アカウントでログインすると閲覧できます。';
+    }
+    if (loginBtn) {
+      loginBtn.href = 'account.html?mode=login&returnTo=members.html';
+    }
+  }
+
+  function showMembers(user) {
     document.getElementById('password-screen').style.display = 'none';
     document.getElementById('members-content').style.display = 'block';
     document.getElementById('member-badge').style.display = 'inline-block';
     document.getElementById('logout-btn').style.display = 'inline-block';
-    loadAll();
+    document.getElementById('member-badge').textContent = (user?.username || '会員') + ' さん';
+    document.getElementById('members-hero-copy').textContent = (user?.username || 'あなた') + ' さん向けに、選考情報・限定イベント・資料・輪読会の貸出状況をまとめています。';
+    if (!hasLoadedMembersContent) {
+      hasLoadedMembersContent = true;
+      loadAll();
+    }
   }
 
-  // 自動ログイン（セッション維持）
-  if (sessionStorage.getItem('members_auth') === '1') showMembers();
+  const currentMember = KeioNaviAuth.getCurrentUser();
+  if (currentMember) showMembers(currentMember);
+  else updateAuthGate();
 
   async function fetchCSV(sheetName) {
     if (!GAS_PROXY_URL) throw new Error('GAS_PROXY_URLが設定されていません');
@@ -829,16 +840,14 @@
   // GASプロキシ経由でスプシを読み込む
   async function fetchViaGAS(sheetKey) {
     if (!GAS_PROXY_URL) throw new Error('GAS_PROXY_URLが設定されていません');
-    const url = `${GAS_PROXY_URL}?action=read&sheetKey=${encodeURIComponent(sheetKey)}`;
-    const res = await fetch(url, {
-      method: 'GET',
-      cache: 'no-store',
+    const res = await fetch(GAS_PROXY_URL, {
+      method: 'POST',
+        body: JSON.stringify({ action: 'read', sheetKey }),
       redirect: 'follow',
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (data.status !== 'ok') throw new Error(data.message || '読み込みに失敗しました');
-    return data.rows || [];
+    return data.rows;
   }
 
   // ① 選考情報
@@ -875,8 +884,8 @@
   function checkDeadlineAlert() {
     if (!selectionRows.length) return;
 
-    // localStorageから気になりリストを読む（match.htmlと共有）
-    const liked = JSON.parse(localStorage.getItem('keio_navi_liked_v2') || '[]');
+    // アカウントごとの気になりリストを読む（match.htmlと共有）
+    const liked = KeioNaviAuth.getLikedCompanies();
     const today = new Date();
 
     let urgent = [];
@@ -977,6 +986,7 @@
   function renderSelection() {
     const el = document.getElementById('selection-list');
     const today = new Date();
+    const liked = KeioNaviAuth.getLikedCompanies();
     renderDeadlineBanner(today);
 
     let rows = [...selectionRows].filter(r => r[0] && r[0] !== '企業名・選考内容' && r[0] !== '企業名');
@@ -997,6 +1007,16 @@
 
     // 締切ソート
     rows.sort((a, b) => {
+      const aLiked = liked.some(c => {
+        const rowName = (a[0] || '').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').trim();
+        return selectionMatch(rowName, a[6] || '', c.name);
+      });
+      const bLiked = liked.some(c => {
+        const rowName = (b[0] || '').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').trim();
+        return selectionMatch(rowName, b[6] || '', c.name);
+      });
+      if (aLiked !== bLiked) return aLiked ? -1 : 1;
+
       const da = a[1] ? new Date(a[1].replace(/\//g,'-')) : new Date('9999-12-31');
       const db = b[1] ? new Date(b[1].replace(/\//g,'-')) : new Date('9999-12-31');
       return selectionSortAsc ? da - db : db - da;
@@ -1023,9 +1043,10 @@
         // 企業名から「（...）」を除いてノート検索
         const companyNameClean = (r[0]||'').replace(/（.*?）/g,'').replace(/\(.*?\)/g,'').trim();
         const selNote = findNote(companyNameClean);
+        const isLiked = liked.some(c => selectionMatch(companyNameClean, r[6] || '', c.name));
         return `<div class="selection-row">
           <div>
-            <div class="sel-company">${r[0]||'–'}</div>
+            <div class="sel-company">${r[0]||'–'}${isLiked ? '<span style="font-size:0.66rem; margin-left:0.45rem; color:var(--crimson); font-weight:700;">♥ 気になる企業</span>' : ''}</div>
             <div class="sel-type">${r[4] ? `<span style="font-size:0.68rem;color:var(--gold);">${r[4]}</span>` : ''}${featureTag}</div>
           </div>
           <div class="sel-deadline ${urgent ? 'urgent' : ''}">${deadlineLabel}</div>
@@ -1273,12 +1294,22 @@
   function renderRandomNotes() {
     const valid = companyNotes.filter(r => r[0] && r[0].trim());
     if (!valid.length) return;
-    // ランダムに3社選ぶ
-    const shuffled = [...valid].sort(() => Math.random() - 0.5);
-    const picks = shuffled.slice(0, Math.min(3, shuffled.length));
+    const liked = KeioNaviAuth.getLikedCompanies();
+    const title = document.getElementById('random-notes-title');
+    const preferred = liked
+      .map(company => findNote(company.name))
+      .filter(Boolean)
+      .filter((note, index, list) => list.findIndex(item => item[0] === note[0]) === index);
+    const fallback = valid
+      .filter(note => !preferred.some(item => item[0] === note[0]))
+      .sort(() => Math.random() - 0.5);
+    const picks = [...preferred, ...fallback].slice(0, Math.min(3, valid.length));
     const section = document.getElementById('random-notes-section');
     const grid = document.getElementById('random-notes-grid');
     section.style.display = 'block';
+    if (title) {
+      title.textContent = preferred.length ? '気になる企業のノート' : '今日のおすすめ企業ノート';
+    }
     grid.innerHTML = picks.map(r => {
       const preview = [r[2], r[3], r[4]].filter(Boolean).join(' ／ ');
       return `<div class="company-note-card" onclick="openModal('${(r[0]||'').replace(/'/g,"\\'")}')">
@@ -1510,6 +1541,7 @@
         method: 'POST',
         redirect: 'follow',
         body: JSON.stringify({ action: 'save', searchWord, note: { ...note, officialName } }),
+        headers: { 'Content-Type': 'application/json' },
       });
       const resultText = await res.text();
       let result;

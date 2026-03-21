@@ -239,7 +239,7 @@
   <div class="section-inner">
     <div class="section-label">WHAT YOU GET</div>
     <h2 class="section-title">参加すると使えるもの</h2>
-    <p class="section-desc">会員ページには、就活を有利に進めるためのコンテンツが揃っています。</p>
+    <p class="section-desc">アカウント登録後に使える会員ページには、就活を有利に進めるためのコンテンツが揃っています。</p>
     <div class="get-grid">
       <div class="get-card">
         <div class="get-icon">
@@ -329,20 +329,21 @@
 <!-- FOOTER -->
 <footer>
   <a href="index.html">トップページ</a>
-  <a href="members.html">会員ページ</a>
+  <a href="account.html">ログイン / アカウント</a>
   <a href="index.html#contact">お問い合わせ</a>
   <div class="footer-note">© 慶應就活ナビ — 大学公式ではありません。有志の学生による非営利団体です。</div>
 </footer>
 
+<script src="auth.js"></script>
 <script>
 
   // ===== 新歓イベント スプシ連携（GASプロキシ経由）=====
-  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbybiRMbrMnLMEabmGxVLMZ_7eGSOFPPOQ6NsbbVADlRiF4409qnJyX8K4tLqgiSNa8Qtg/exec';
+  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxhnBXykIHYY3044O1TIQc5cATOMh3OY_hcEqzXheQsy1ccYCeSkYEkUTzoti5Hz7xjYw/exec';
 
   async function loadOrientationEvents() {
     const el = document.getElementById('orientation-events');
     const sample = [
-      ['2026年4月 第2週予定', '就活ナビ説明会', 'HPのデモを見ながら、コミュニティの使い方を紹介。参加者その場でパスワード配布まで完結します。'],
+      ['2026年4月 第2週予定', '就活ナビ説明会', 'HPのデモを見ながら、コミュニティの使い方を紹介。参加者はその場でアカウント登録まで完了できます。'],
       ['2026年4月 第3週予定', '業界研究入門会', '商社・金融・コンサル・メーカーなど主要業界を先輩メンバーが解説。就活の全体像をつかむ最初の一歩に。'],
       ['2026年5月 予定', '先輩との座談会', '内定先が決まった4年生・就活中の3年生に何でも聞ける座談会。リアルな就活体験を直接聞けます。'],
     ];
@@ -350,13 +351,11 @@
     let rows = sample;
     if (GAS_PROXY_URL) {
       try {
-        const url = `${GAS_PROXY_URL}?action=read&sheetKey=orientation`;
-        const res = await fetch(url, {
-          method: 'GET',
-          cache: 'no-store',
+        const res = await fetch(GAS_PROXY_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'read', sheetKey: 'orientation' }),
           redirect: 'follow',
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data.status === 'ok' && data.rows.length) rows = data.rows;
         else rows = [];
