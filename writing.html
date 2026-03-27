@@ -538,12 +538,29 @@
         </div>
       </div>
       <p style="font-size:0.8rem;color:var(--text-muted);line-height:1.8;margin-bottom:1.2rem;">PREP法（結論→理由→具体例→結論）で自己PRを組み立てよう。入力した内容は自動でプレビューに反映されます。</p>
+
+      <!-- 保存済み自己PR一覧 -->
+      <div id="pr-saved-list" style="margin-bottom:1.2rem;"></div>
+
+      <!-- タイトル・対象業界 -->
+      <div style="display:flex;gap:0.5rem;margin-bottom:0.8rem;flex-wrap:wrap;">
+        <input type="text" id="pr-title" placeholder="タイトル（例：リーダーシップ）" style="flex:1;min-width:150px;padding:0.5rem 0.8rem;border:1px solid rgba(10,26,62,0.15);font-size:0.82rem;font-family:'Noto Sans JP',sans-serif;">
+        <input type="text" id="pr-industry" placeholder="対象業界（任意）" style="flex:1;min-width:150px;padding:0.5rem 0.8rem;border:1px solid rgba(10,26,62,0.15);font-size:0.82rem;font-family:'Noto Sans JP',sans-serif;">
+      </div>
+      <input type="hidden" id="pr-edit-id">
+
       <div id="pr-steps"></div>
+      <div style="margin-top:0.5rem;">
+        <label style="font-size:0.78rem;color:var(--text-muted);">メモ（任意）</label>
+        <textarea id="pr-memo" placeholder="改善メモなど..." style="width:100%;padding:0.5rem 0.8rem;border:1px solid rgba(10,26,62,0.15);font-size:0.82rem;font-family:'Noto Sans JP',sans-serif;min-height:50px;margin-top:0.3rem;"></textarea>
+      </div>
       <div class="pr-preview-wrap"><div class="pr-preview" id="pr-preview">（入力するとここにプレビューが表示されます）</div></div>
       <div class="pr-char-count" id="pr-char-count">0文字</div>
       <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;">
+        <button class="pr-copy-btn" onclick="saveSelfPR()" style="background:var(--navy);color:white;border-color:var(--navy);">サーバーに保存</button>
         <button class="pr-copy-btn" onclick="copyPR()">クリップボードにコピー</button>
         <button class="pr-copy-btn" onclick="aiReviewPR()" id="pr-ai-btn" style="background:var(--navy);color:white;border-color:var(--navy);">AIに添削してもらう</button>
+        <button class="pr-copy-btn" onclick="resetPRForm()" style="color:var(--text-muted);">新規作成</button>
       </div>
       <div id="pr-ai-result" style="display:none;margin-top:1.2rem;padding:1rem;background:var(--gray);font-size:0.82rem;line-height:1.8;white-space:pre-wrap;border-left:3px solid var(--gold);"></div>
     </div>
@@ -978,6 +995,7 @@
         + '</div></div>';
     }).join('');
     updatePRPreview();
+    loadSelfPRList();
   }
 
   function updatePRPreview() {
@@ -1030,6 +1048,98 @@
       btn.textContent = 'コピーしました！';
       setTimeout(function() { btn.textContent = orig; }, 1500);
     });
+  }
+
+  // ===== 自己PR サーバー保存 =====
+  let selfPREntries = [];
+
+  async function loadSelfPRList() {
+    try {
+      var data = await callAuthApi('readMySelfPR');
+      selfPREntries = data.entries || [];
+      renderSelfPRList();
+    } catch(e) { console.warn('selfPR load failed', e); }
+  }
+
+  function renderSelfPRList() {
+    var el = document.getElementById('pr-saved-list');
+    if (!selfPREntries.length) {
+      el.innerHTML = '<div style="font-size:0.78rem;color:var(--text-muted);padding:0.5rem 0;">保存済みの自己PRはありません。</div>';
+      return;
+    }
+    el.innerHTML = '<div style="font-size:0.72rem;color:var(--gold);font-weight:700;letter-spacing:0.1em;margin-bottom:0.5rem;">保存済みの自己PR</div>' +
+      selfPREntries.map(function(pr) {
+        var preview = (pr.point1 || '').substring(0, 40);
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0.8rem;background:white;border:1px solid rgba(10,26,62,0.08);margin-bottom:0.4rem;cursor:pointer;" onclick="loadSelfPR(\'' + pr.id + '\')">' +
+          '<div><div style="font-weight:700;font-size:0.85rem;color:var(--navy);">' + (pr.title || '無題') + '</div>' +
+          (pr.targetIndustry ? '<div style="font-size:0.68rem;color:var(--text-muted);">' + pr.targetIndustry + '</div>' : '') +
+          '<div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">' + preview + (preview.length >= 40 ? '...' : '') + '</div></div>' +
+          '<button onclick="event.stopPropagation();deleteSelfPR(\'' + pr.id + '\')" style="background:none;border:none;color:rgba(10,26,62,0.25);cursor:pointer;font-size:0.75rem;padding:0.3rem;">削除</button>' +
+          '</div>';
+      }).join('');
+  }
+
+  function loadSelfPR(id) {
+    var pr = selfPREntries.find(function(e) { return e.id === id; });
+    if (!pr) return;
+    document.getElementById('pr-edit-id').value = pr.id;
+    document.getElementById('pr-title').value = pr.title || '';
+    document.getElementById('pr-industry').value = pr.targetIndustry || '';
+    document.getElementById('pr-memo').value = pr.memo || '';
+    var p1 = document.getElementById('pr-p1'); if (p1) p1.value = pr.point1 || '';
+    var r1 = document.getElementById('pr-r1'); if (r1) r1.value = pr.reason || '';
+    var e1 = document.getElementById('pr-e1'); if (e1) e1.value = pr.example || '';
+    var p2 = document.getElementById('pr-p2'); if (p2) p2.value = pr.point2 || '';
+    updatePRPreview();
+  }
+
+  async function saveSelfPR() {
+    var data = {};
+    PR_STEPS.forEach(function(s) {
+      var el = document.getElementById('pr-' + s.field);
+      data[s.field] = el ? el.value : '';
+    });
+    var text = PR_STEPS.map(function(s) { return (data[s.field] || '').trim(); }).filter(Boolean).join('\n\n');
+
+    var payload = {
+      id: document.getElementById('pr-edit-id').value || '',
+      title: document.getElementById('pr-title').value.trim() || '無題',
+      point1: data.p1 || '',
+      reason: data.r1 || '',
+      example: data.e1 || '',
+      point2: data.p2 || '',
+      fullText: text,
+      targetIndustry: document.getElementById('pr-industry').value.trim(),
+      memo: document.getElementById('pr-memo').value.trim()
+    };
+
+    try {
+      var result = await callAuthApi('writeSelfPR', { selfPR: payload });
+      if (result.id) document.getElementById('pr-edit-id').value = result.id;
+      await loadSelfPRList();
+      alert('保存しました。');
+    } catch(e) { alert('保存に失敗しました: ' + e.message); }
+  }
+
+  async function deleteSelfPR(id) {
+    if (!confirm('この自己PRを削除しますか？')) return;
+    try {
+      await callAuthApi('deleteSelfPR', { id: id });
+      if (document.getElementById('pr-edit-id').value === id) resetPRForm();
+      await loadSelfPRList();
+    } catch(e) { alert('削除に失敗しました: ' + e.message); }
+  }
+
+  function resetPRForm() {
+    document.getElementById('pr-edit-id').value = '';
+    document.getElementById('pr-title').value = '';
+    document.getElementById('pr-industry').value = '';
+    document.getElementById('pr-memo').value = '';
+    PR_STEPS.forEach(function(s) {
+      var el = document.getElementById('pr-' + s.field);
+      if (el) el.value = '';
+    });
+    updatePRPreview();
   }
 
   // ===== ES添削掲示板 =====
@@ -1762,7 +1872,7 @@
   var ESR_CHAT_SYSTEM = 'あなたは新卒就職活動のプロフェッショナルなESコーチです。慶應義塾大学の学生のESについて対話形式でサポートしています。日本語で具体的かつ建設的にアドバイスしてください。';
 
   function initEsrChat(company, entries, aiResponse) {
-    var userContent = '【企業名】' + (company || '（未記入）') + '\n\n以下のESを添削してください。\n\n' +
+    var userContent = '以下のESを添削してください。\n\n' +
       entries.map(function(e, i) {
         var lim = e.charLimit ? '（字数制限: ' + e.charLimit + '字）' : '';
         return '【設問' + (i+1) + '】' + (e.question || '') + lim + '\n\n' + e.esText;

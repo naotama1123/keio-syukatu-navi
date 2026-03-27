@@ -227,7 +227,7 @@
     }
     if (!profile.displayName && !profile.username) return '表示名を入力してください。';
     if (!profile.desiredIndustry) return '志望業界を選択してください。';
-    if (!profile.preferredCompany1) return '第1志望の企業名を入力してください。';
+    if (!profile.preferredCompany1) return '第1志望を入力してください。';
     if (!profile.lineName) return 'LINE名を入力してください。';
     if (options && options.requireLineQr && !profile.lineQrDataUrl) {
       return 'LINE QRをアップロードしてください。';
