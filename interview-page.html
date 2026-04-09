@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0a1a3e"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>面接対策 ｜ 慶應就活ナビ</title>
+<title>面接対策 ｜ 就活ナビ</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -404,7 +404,7 @@
 
 <!-- NAV -->
 <nav style="justify-content:center;">
-  <a href="index.html" class="nav-logo">慶應就活ナビ</a>
+  <a href="index.html" class="nav-logo">就活ナビ</a>
   <span class="nav-member-badge" id="member-badge" style="display:none;position:absolute;right:5vw;font-size:0.72rem;color:var(--gold-light);"></span>
   <button class="logout-btn" id="logout-btn" style="display:none;position:absolute;right:5vw;" onclick="logout()">ログアウト</button>
 </nav>
@@ -417,7 +417,7 @@
   <div class="pw-box">
     <div class="pw-icon">&#128100;</div>
     <h2 class="pw-title">面接対策ページ</h2>
-    <p class="pw-sub" id="auth-gate-copy">このページは慶應就活ナビのメンバー限定です。<br>個人アカウントでログインすると閲覧できます。</p>
+    <p class="pw-sub" id="auth-gate-copy">このページは就活ナビのメンバー限定です。<br>個人アカウントでログインすると閲覧できます。</p>
     <div class="gate-actions">
       <a class="pw-btn" id="gate-login-btn" href="account.html?mode=login&amp;returnTo=interview-page.html">ログインして入る &rarr;</a>
       <a class="pw-link-btn" href="account.html?mode=signup&amp;returnTo=interview-page.html">新しくアカウントを作る</a>
@@ -937,8 +937,8 @@
 <script src="auth.js"></script>
 <script>
   // ===== Constants =====
-  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxopfM6pUz7TZFVAbWfSmvc7SFhMySteyhXlMsoA4QreN1hqJZ7cJ3GqQ-7NGPedtdJIg/exec';
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxopfM6pUz7TZFVAbWfSmvc7SFhMySteyhXlMsoA4QreN1hqJZ7cJ3GqQ-7NGPedtdJIg/exec';
+  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxo0hLKrwdiI1kAyt--8QMC_2H9Y9jKEEwYLx28MbC4S6eRfW9RVMKciz1IuhTGsmFF/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxo0hLKrwdiI1kAyt--8QMC_2H9Y9jKEEwYLx28MbC4S6eRfW9RVMKciz1IuhTGsmFF/exec';
 
   var AI_CONSENT_KEY = 'keio_navi_ai_consent_v1';
   function checkAiConsent() {
@@ -977,7 +977,7 @@
     const copy = document.getElementById('auth-gate-copy');
     const loginBtn = document.getElementById('gate-login-btn');
     if (copy) {
-      copy.innerHTML = 'このページは慶應就活ナビのメンバー限定です。\x3cbr>個人アカウントでログインすると閲覧できます。';
+      copy.innerHTML = 'このページは就活ナビのメンバー限定です。\x3cbr>個人アカウントでログインすると閲覧できます。';
     }
     if (loginBtn) {
       loginBtn.href = 'account.html?mode=login&returnTo=interview-page.html';

@@ -443,7 +443,7 @@
 
 <script src="auth.js"></script>
 <script>
-  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxopfM6pUz7TZFVAbWfSmvc7SFhMySteyhXlMsoA4QreN1hqJZ7cJ3GqQ-7NGPedtdJIg/exec';
+  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxo0hLKrwdiI1kAyt--8QMC_2H9Y9jKEEwYLx28MbC4S6eRfW9RVMKciz1IuhTGsmFF/exec';
 
   let currentToken = null;
   let generatedLink = '';
@@ -474,8 +474,12 @@
 
   function getSession() {
     try {
-      var s = localStorage.getItem('keio_navi_session');
-      return s ? JSON.parse(s) : null;
+      if (window.KeioNaviAuth && typeof window.KeioNaviAuth.getSessionToken === 'function') {
+        var token = window.KeioNaviAuth.getSessionToken();
+        return token ? { sessionToken: token } : null;
+      }
+      var t = localStorage.getItem('keio_navi_session_token_v1');
+      return t ? { sessionToken: t } : null;
     } catch(e) { return null; }
   }
 

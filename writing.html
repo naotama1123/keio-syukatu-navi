@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0a1a3e"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ES・ガクチカを書く ｜ 慶應就活ナビ</title>
+<title>ES・ガクチカを書く ｜ 就活ナビ</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -244,8 +244,6 @@
   .mb-gk-picker-actions button { padding: 0.4rem 1rem; background: none; border: 1px solid rgba(10,26,62,0.2); font-family: 'Noto Sans JP',sans-serif; font-size: 0.8rem; cursor: pointer; }
   .ai-tab-btn { padding: 0.6rem 1.2rem; background: none; border: none; font-family: 'Noto Sans JP',sans-serif; font-size: 0.82rem; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
   .ai-tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); font-weight: 700; }
-  .ai-tab-btn.coming-soon { cursor: default; opacity: 0.5; position: relative; }
-  .ai-tab-btn.coming-soon .soon-badge { font-size: 0.62rem; background: var(--gold); color: var(--navy); border-radius: 3px; padding: 0.1rem 0.35rem; margin-left: 0.4rem; font-weight: 700; vertical-align: middle; }
   .ai-tab-panel { display: none; }
   .ai-tab-panel.active { display: block; }
   .ai-form-group { margin-bottom: 1rem; }
@@ -691,7 +689,7 @@
 
 <!-- NAV -->
 <nav style="justify-content:center;">
-  <a href="index.html" class="nav-logo">慶應就活ナビ</a>
+  <a href="index.html" class="nav-logo">就活ナビ</a>
   <span class="nav-member-badge" id="member-badge" style="display:none;position:absolute;right:5vw;font-size:0.72rem;color:var(--gold-light);"></span>
   <button class="logout-btn" id="logout-btn" style="display:none;position:absolute;right:5vw;" onclick="logout()">ログアウト</button>
 </nav>
@@ -706,7 +704,7 @@
   <div class="pw-box">
     <div class="pw-icon">&#x1f4dd;</div>
     <h2 class="pw-title">ES・ガクチカを書く</h2>
-    <p class="pw-sub" id="auth-gate-copy">このページは慶應就活ナビのメンバー限定です。<br>個人アカウントでログインすると閲覧できます。</p>
+    <p class="pw-sub" id="auth-gate-copy">このページは就活ナビのメンバー限定です。<br>個人アカウントでログインすると閲覧できます。</p>
     <div class="gate-actions">
       <a class="pw-btn" id="gate-login-btn" href="account.html?mode=login&amp;returnTo=writing.html">ログインして入る →</a>
       <a class="pw-link-btn" href="account.html?mode=signup&amp;returnTo=writing.html">新しくアカウントを作る</a>
@@ -1465,7 +1463,7 @@
 
 <script src="auth.js"></script>
 <script>
-  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxopfM6pUz7TZFVAbWfSmvc7SFhMySteyhXlMsoA4QreN1hqJZ7cJ3GqQ-7NGPedtdJIg/exec';
+  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxo0hLKrwdiI1kAyt--8QMC_2H9Y9jKEEwYLx28MbC4S6eRfW9RVMKciz1IuhTGsmFF/exec';
   const GAS_URL = GAS_PROXY_URL;
 
   var AI_CONSENT_KEY = 'keio_navi_ai_consent_v1';
@@ -2710,7 +2708,6 @@
       { key:'expression',  name:'\u8868\u73FE\u529B' },
       { key:'persuasion',  name:'\u8AAC\u5F97\u529B' }
     ];
-    function scoreColor(v) { return v <= 2 ? 'crimson' : v === 3 ? '#d4a017' : '#0a6e45'; }
     var vals = DIMS.map(function(d) { return scores[d.key]; });
     var avg = vals.reduce(function(a,b){return a+b;},0) / vals.length;
     var avgRound = Math.round(avg * 10) / 10;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0a1a3e"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>会員ページ ｜ 慶應就活ナビ</title>
+<title>会員ページ ｜ 就活ナビ</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1462,8 +1462,6 @@
   .ai-tool-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 2px solid rgba(10,26,62,0.1); }
   .ai-tab-btn { padding: 0.6rem 1.2rem; background: none; border: none; font-family: 'Noto Sans JP',sans-serif; font-size: 0.82rem; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
   .ai-tab-btn.active { color: var(--navy); border-bottom-color: var(--navy); font-weight: 700; }
-  .ai-tab-btn.coming-soon { cursor: default; opacity: 0.5; position: relative; }
-  .ai-tab-btn.coming-soon .soon-badge { font-size: 0.62rem; background: var(--gold); color: var(--navy); border-radius: 3px; padding: 0.1rem 0.35rem; margin-left: 0.4rem; font-weight: 700; vertical-align: middle; }
   .ai-tab-panel { display: none; }
   .ai-tab-panel.active { display: block; }
   .ai-form-group { margin-bottom: 1rem; }
@@ -1901,7 +1899,7 @@
 
 <!-- NAV -->
 <nav>
-  <a href="index.html" class="nav-logo">慶應就活ナビ</a>
+  <a href="index.html" class="nav-logo">就活ナビ</a>
   <span class="nav-member-badge" id="member-badge" style="display:none;font-size:0.72rem;color:var(--gold-light);"></span>
   <button class="logout-btn" id="logout-btn" style="display:none;" onclick="logout()">ログアウト</button>
   <button class="hamburger-m" id="hamburger-m" onclick="toggleMobileMenuM()">
@@ -1939,7 +1937,7 @@
   <div class="pw-box">
     <div class="pw-icon">👤</div>
     <h2 class="pw-title">マイページ</h2>
-    <p class="pw-sub" id="auth-gate-copy">このページは慶應就活ナビのメンバー限定です。<br>個人アカウントでログインすると閲覧できます。</p>
+    <p class="pw-sub" id="auth-gate-copy">このページは就活ナビのメンバー限定です。<br>個人アカウントでログインすると閲覧できます。</p>
     <div class="gate-actions">
       <a class="pw-btn" id="gate-login-btn" href="account.html?mode=login&amp;returnTo=members.html">ログインして入る →</a>
       <a class="pw-link-btn" href="account.html?mode=signup&amp;returnTo=members.html">新しくアカウントを作る</a>
@@ -2318,7 +2316,7 @@
   };
   const NOTICE_CSV     = ''; // ← お知らせスプシのCSV URLを貼る（列: 日付・タイトル・内容・タグ）
   const SELECTION_FORM = 'https://docs.google.com/forms/d/e/1FAIpQLSeg0-r0YzP_1sdSjvI98lNWrlwYfCsChk67fGlq3uwrQvuuFA/viewform?usp=publish-editor';
-  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxopfM6pUz7TZFVAbWfSmvc7SFhMySteyhXlMsoA4QreN1hqJZ7cJ3GqQ-7NGPedtdJIg/exec';
+  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxo0hLKrwdiI1kAyt--8QMC_2H9Y9jKEEwYLx28MbC4S6eRfW9RVMKciz1IuhTGsmFF/exec';
   const LENDING_FORM  = 'https://docs.google.com/forms/d/e/1FAIpQLScmV_ubANH5RNIHD_wEH3yakHbs5YqdegrPysSfpFo4veAg4Q/viewform'; // 列: タイトル, 著者, 状態(貸出可/貸出中), 現在の保有者
   let hasLoadedMembersContent = false;
 
@@ -2407,7 +2405,7 @@
     const copy = document.getElementById('auth-gate-copy');
     const loginBtn = document.getElementById('gate-login-btn');
     if (copy) {
-      copy.innerHTML = 'このページは慶應就活ナビのメンバー限定です。<br>個人アカウントでログインすると閲覧できます。';
+      copy.innerHTML = 'このページは就活ナビのメンバー限定です。<br>個人アカウントでログインすると閲覧できます。';
     }
     if (loginBtn) {
       loginBtn.href = 'account.html?mode=login&returnTo=members.html';
@@ -3716,7 +3714,7 @@
     switch(m.id) {
       case 'm01':
         if (s && s.gkCount > 0) return true;
-        try { var gk = localStorage.getItem('keio_navi_gakuchika'); if (gk) { var d = JSON.parse(gk); if (Array.isArray(d) && d.length > 0) return true; } } catch(e) {}
+        try { var gk = localStorage.getItem('keio_navi_gakuchika_v1'); if (gk) { var d = JSON.parse(gk); if (Array.isArray(d) && d.length > 0) return true; } } catch(e) {}
         return false;
       case 'm02':
         try { var sa = JSON.parse(localStorage.getItem('keio_navi_self_analysis_v1') || '{}'); return Object.keys(sa).length > 0 && Object.values(sa).some(function(v){ return v && v.toString().trim() !== ''; }); } catch(e) { return false; }
@@ -5816,7 +5814,7 @@
   }
 
   // ===== AI就活サポートツール =====
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxopfM6pUz7TZFVAbWfSmvc7SFhMySteyhXlMsoA4QreN1hqJZ7cJ3GqQ-7NGPedtdJIg/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxo0hLKrwdiI1kAyt--8QMC_2H9Y9jKEEwYLx28MbC4S6eRfW9RVMKciz1IuhTGsmFF/exec';
 
   // ── GAS認証API 共通呼び出し ──────────────────────────────────────────────
   async function callAuthApi(action, extraPayload) {
@@ -7085,7 +7083,7 @@
 
   // ===== NPS計測 =====
   function checkNPS() {
-    if (localStorage.getItem('keionavi_nps_done')) return;
+    if (localStorage.getItem('keio_navi_nps_done_v1')) return;
     const user = KeioNaviAuth.getCurrentUser();
     if (!user || !user.createdAt) return;
     const regDate = new Date(user.createdAt);
@@ -7102,8 +7100,8 @@
     overlay.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(10,26,62,0.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:2rem;';
     const box = document.createElement('div');
     box.style.cssText = 'background:var(--cream,#faf7f2);max-width:480px;width:100%;padding:2rem;border-top:3px solid #c9a84c;box-shadow:0 20px 60px rgba(0,0,0,0.4);';
-    box.innerHTML = '\x3cdiv style="font-family:\'Noto Serif JP\',serif;font-size:1.05rem;font-weight:700;color:#0a1a3e;margin-bottom:0.5rem;">慶應就活ナビの満足度調査\x3c/div>'
-      + '\x3cp style="font-size:0.8rem;color:#6b6b7e;line-height:1.8;margin-bottom:1.2rem;">慶應就活ナビを友人に薦める可能性はどのくらいですか？（0-10）\x3c/p>'
+    box.innerHTML = '\x3cdiv style="font-family:\'Noto Serif JP\',serif;font-size:1.05rem;font-weight:700;color:#0a1a3e;margin-bottom:0.5rem;">就活ナビの満足度調査\x3c/div>'
+      + '\x3cp style="font-size:0.8rem;color:#6b6b7e;line-height:1.8;margin-bottom:1.2rem;">就活ナビを友人に薦める可能性はどのくらいですか？（0-10）\x3c/p>'
       + '\x3cdiv id="nps-scores" style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-bottom:1rem;">\x3c/div>'
       + '\x3ctextarea id="nps-comment" placeholder="改善してほしい点やご意見（任意）" style="width:100%;padding:0.6rem;border:1px solid rgba(10,26,62,0.15);font-family:\'Noto Sans JP\',sans-serif;font-size:0.82rem;resize:vertical;min-height:60px;outline:none;margin-bottom:1rem;">\x3c/textarea>'
       + '\x3cdiv style="display:flex;gap:0.8rem;">'
@@ -7144,7 +7142,7 @@
         method: 'POST',
         body: JSON.stringify({ action: 'submitNPS', sessionToken: sessionToken, score: parseInt(selected), comment: comment })
       });
-      localStorage.setItem('keionavi_nps_done', '1');
+      localStorage.setItem('keio_navi_nps_done_v1', '1');
       closeNPS();
       if (typeof showFlash === 'function') showFlash('ご回答ありがとうございました！', 'success');
     } catch(e) {
