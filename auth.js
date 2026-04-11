@@ -1,5 +1,5 @@
 (function () {
-  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbxPJgztIxNtCPJPud6mSJbcwGbBDbK9yLRqUt5sWEg6sqEfwegZi66azX_zGgO2YL_a/exec';
+  const GAS_PROXY_URL = 'https://script.google.com/macros/s/AKfycbyDFVBj-omNy1PFJlCT9p1j7xJbtadoFHNkdu_EjvZLA9lN-3r5mVT51ZKN3Bo48ojdlQ/exec';
   const SESSION_TOKEN_KEY = 'keio_navi_session_token_v1';
   const USER_CACHE_KEY = 'keio_navi_current_user_cache_v1';
   const LIKED_CACHE_KEY = 'keio_navi_liked_cache_v1';
@@ -220,6 +220,8 @@
       referralCode: trimText(user.referralCode),
       createdAt: user.createdAt || '',
       updatedAt: user.updatedAt || '',
+      emailVerified: user.emailVerified === true || user.emailVerified === 'true',
+      emailVerifiedAt: trimText(user.emailVerifiedAt) || '',
       sessionToken: trimText(user.sessionToken) || getSessionToken(),
       name: displayName,
       desiredIndustries: desiredIndustry,
@@ -549,6 +551,46 @@
     try {
       const result = await postToGas({ action: 'authResetPassword', resetToken: token, newPassword: password });
       return { ok: true, message: result.message };
+    } catch (serverError) {
+      return { ok: false, error: serverError.message };
+    }
+  }
+
+  async function resendVerificationEmail() {
+    const sessionToken = getSessionToken();
+    if (!sessionToken) return { ok: false, error: 'ログインが必要です。' };
+    try {
+      const result = await postToGas({ action: 'authSendVerificationEmail', sessionToken });
+      return {
+        ok: true,
+        message: result.message || '確認メールを送信しました。',
+        alreadyVerified: Boolean(result.alreadyVerified),
+      };
+    } catch (serverError) {
+      return { ok: false, error: serverError.message };
+    }
+  }
+
+  async function verifyEmail(token) {
+    const verifyToken = trimText(token);
+    if (!verifyToken) return { ok: false, error: '認証トークンが必要です。' };
+    try {
+      const result = await postToGas({ action: 'authVerifyEmail', token: verifyToken });
+      // ログイン中ならキャッシュ済みユーザーを更新
+      try {
+        const cached = readSessionCacheJSON(USER_CACHE_KEY, null);
+        if (cached) {
+          cached.emailVerified = true;
+          cached.emailVerifiedAt = result.emailVerifiedAt || new Date().toISOString();
+          writeSessionCacheJSON(USER_CACHE_KEY, normalizeUser(cached));
+        }
+      } catch (e) {}
+      return {
+        ok: true,
+        message: result.message || 'メールアドレスを確認しました。',
+        alreadyVerified: Boolean(result.alreadyVerified),
+        emailVerifiedAt: result.emailVerifiedAt || '',
+      };
     } catch (serverError) {
       return { ok: false, error: serverError.message };
     }
@@ -973,6 +1015,8 @@
     deleteAccount,
     requestPasswordReset,
     resetPassword,
+    resendVerificationEmail,
+    verifyEmail,
     getReferralInfo,
     listSessions,
     revokeSession,
